@@ -42,3 +42,4 @@ shared/normative_review_queue.jsonl
 .pytest_cache/
 .coverage
 htmlcov/
+test_reports/

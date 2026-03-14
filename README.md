@@ -251,9 +251,9 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 | Agent2 — Categorizer | Non iniziato ❌ | |
 | Agent4 — Compliance | Non iniziato ❌ | |
 | Agent5 — Declaration | Non iniziato ❌ | |
-| Agent6 — Scheduler | Non iniziato ❌ | |
+| Agent6 — Scheduler | MVP ✅ | Piano annuale F24, imposta sostitutiva saldo/acconti, INPS separata/artigiani/commercianti, compensazione crediti, 14 test |
 | Agent7 — Advisor | Non iniziato ❌ | |
-| Agent8 — Invoicing | Non iniziato ❌ | |
+| Agent8 — Invoicing | MVP ✅ | FatturaPA XML, marca da bollo, rivalsa INPS 4%, numerazione progressiva, esiti SDI, 12 test |
 | Agent9 — Notifier | Non iniziato ❌ | |
 
 ---
