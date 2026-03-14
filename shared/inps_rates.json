@@ -1,61 +1,52 @@
 {
   "_description": "Aliquote e parametri INPS per anno — aggiornamento annuale obbligatorio",
   "_source": "Circolare INPS annuale",
-  "_note": "Agent Supervisor verifica ogni anno (entro gennaio) la pubblicazione della nuova circolare INPS e aggiorna questo file",
+  "_note": "Agent Supervisor verifica ogni anno (entro gennaio) la pubblicazione della nuova circolare INPS e aggiorna questo file. Tutti i valori sono stringhe per parsing Decimal.",
 
   "2024": {
     "gestione_separata": {
-      "aliquota_non_iscritti_altre_gestioni": 26.07,
-      "aliquota_iscritti_altre_gestioni": 24.00,
-      "aliquota_pensionati": 24.00,
-      "massimale_annuo": 119650,
-      "minimale_annuo": 18415,
-      "note": "Aliquota su reddito imponibile (ricavi × coeff - contributi versati)"
+      "aliquota": "0.2607",
+      "contributo_maternita": "0.0072",
+      "massimale_annuo": "119650.00",
+      "minimale_annuo": "18415.00"
     },
     "artigiani": {
-      "aliquota_base": 24.00,
-      "riduzione_under_21": -3.00,
-      "minimale_annuo": 18415,
-      "massimale_annuo": 86983,
-      "contributo_fisso_annuo": 4427.04,
-      "contributo_fisso_trimestrale": 1106.76,
-      "soglia_eccedente": 18415,
-      "riduzione_forfettari_35_percento": true,
-      "note": "Contributo fisso sul minimale + aliquota % sul reddito eccedente il minimale"
+      "contributo_fisso_annuo": "4427.04",
+      "contributo_fisso_trimestrale": "1106.76",
+      "minimale_annuo": "18415.00",
+      "massimale_annuo": "86983.00",
+      "aliquota_eccedenza": "0.24",
+      "riduzione_35_disponibile": true
     },
     "commercianti": {
-      "aliquota_base": 24.48,
-      "riduzione_under_21": -3.00,
-      "minimale_annuo": 18415,
-      "massimale_annuo": 86983,
-      "contributo_fisso_annuo": 4515.43,
-      "contributo_fisso_trimestrale": 1128.86,
-      "soglia_eccedente": 18415,
-      "riduzione_forfettari_35_percento": true,
-      "note": "Contributo fisso sul minimale + aliquota % sul reddito eccedente il minimale + 0.48% contributo maternità"
+      "contributo_fisso_annuo": "4515.43",
+      "contributo_fisso_trimestrale": "1128.86",
+      "minimale_annuo": "18415.00",
+      "massimale_annuo": "86983.00",
+      "aliquota_eccedenza": "0.2448",
+      "riduzione_35_disponibile": true
     }
   },
 
   "2025": {
     "_status": "DA VERIFICARE — aggiornare con circolare INPS 2025",
     "gestione_separata": {
-      "aliquota_non_iscritti_altre_gestioni": 26.07,
-      "aliquota_iscritti_altre_gestioni": 24.00,
-      "aliquota_pensionati": 24.00,
+      "aliquota": null,
+      "contributo_maternita": null,
       "massimale_annuo": null,
       "minimale_annuo": null
     },
     "artigiani": {
-      "aliquota_base": null,
-      "minimale_annuo": null,
       "contributo_fisso_annuo": null,
-      "contributo_fisso_trimestrale": null
+      "minimale_annuo": null,
+      "aliquota_eccedenza": null,
+      "riduzione_35_disponibile": true
     },
     "commercianti": {
-      "aliquota_base": null,
-      "minimale_annuo": null,
       "contributo_fisso_annuo": null,
-      "contributo_fisso_trimestrale": null
+      "minimale_annuo": null,
+      "aliquota_eccedenza": null,
+      "riduzione_35_disponibile": true
     }
   },
 
