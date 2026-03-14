@@ -1,0 +1,72 @@
+{
+  "_description": "Scadenze fiscali annuali per contribuenti forfettari",
+  "deadlines": [
+    {
+      "id": "acconto_inps_1",
+      "description": "Primo acconto contributi INPS gestione separata",
+      "date": "06-30",
+      "type": "payment",
+      "f24": true
+    },
+    {
+      "id": "saldo_imposta_sostitutiva",
+      "description": "Saldo imposta sostitutiva anno precedente",
+      "date": "06-30",
+      "type": "payment",
+      "f24": true
+    },
+    {
+      "id": "primo_acconto_imposta",
+      "description": "Primo acconto imposta sostitutiva anno corrente (40%)",
+      "date": "06-30",
+      "type": "payment",
+      "f24": true
+    },
+    {
+      "id": "saldo_imposta_sostitutiva_rateizzato",
+      "description": "Saldo e primo acconto con maggiorazione 0.40% (se differito)",
+      "date": "07-30",
+      "type": "payment",
+      "f24": true
+    },
+    {
+      "id": "acconto_inps_2",
+      "description": "Secondo acconto contributi INPS gestione separata",
+      "date": "09-30",
+      "type": "payment",
+      "f24": true
+    },
+    {
+      "id": "secondo_acconto_imposta",
+      "description": "Secondo acconto imposta sostitutiva (60%)",
+      "date": "11-30",
+      "type": "payment",
+      "f24": true
+    },
+    {
+      "id": "secondo_acconto_inps",
+      "description": "Secondo acconto INPS gestione separata",
+      "date": "11-30",
+      "type": "payment",
+      "f24": true
+    },
+    {
+      "id": "dichiarazione_redditi",
+      "description": "Invio telematico Modello Redditi PF",
+      "date": "11-30",
+      "type": "declaration",
+      "f24": false
+    },
+    {
+      "id": "saldo_inps",
+      "description": "Saldo contributi INPS gestione separata",
+      "date": "06-30",
+      "type": "payment",
+      "f24": true
+    }
+  ],
+  "notes": {
+    "artigiani_commercianti": "Per iscritti INPS artigiani/commercianti le scadenze contributi fissi sono trimestrali: 16/02, 16/05, 20/08, 16/11",
+    "maggiorazione_differimento": "Il versamento può essere differito di 30 giorni con maggiorazione dello 0.40%"
+  }
+}

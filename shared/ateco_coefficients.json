@@ -1,0 +1,32 @@
+{
+  "_description": "Coefficienti di redditività per codice ATECO - regime forfettario",
+  "_source": "Legge 190/2014, allegato 4, aggiornato",
+  "coefficients": {
+    "10-11": { "description": "Industrie alimentari e delle bevande", "coefficient": 0.40 },
+    "45": { "description": "Commercio all'ingrosso e al dettaglio di autoveicoli", "coefficient": 0.40 },
+    "46": { "description": "Commercio all'ingrosso", "coefficient": 0.40 },
+    "47.1": { "description": "Commercio al dettaglio in esercizi non specializzati", "coefficient": 0.40 },
+    "47.2-47.9": { "description": "Commercio al dettaglio specializzato", "coefficient": 0.40 },
+    "55-56": { "description": "Alloggio e ristorazione", "coefficient": 0.40 },
+    "41-42-43": { "description": "Costruzioni e attività immobiliari", "coefficient": 0.86 },
+    "46.01": { "description": "Intermediari del commercio", "coefficient": 0.62 },
+    "55-63": { "description": "Attività dei servizi di alloggio e ristorazione", "coefficient": 0.40 },
+    "64-66": { "description": "Attività finanziarie e assicurative", "coefficient": 0.78 },
+    "68": { "description": "Attività immobiliari", "coefficient": 0.86 },
+    "69-70-71-72-73-74-75": { "description": "Attività professionali, scientifiche e tecniche", "coefficient": 0.78 },
+    "85-86-87-88": { "description": "Istruzione, sanità e assistenza sociale", "coefficient": 0.78 },
+    "01-02-03": { "description": "Agricoltura, silvicoltura e pesca", "coefficient": 0.40 },
+    "05-06-07-08-09": { "description": "Estrazione minerali", "coefficient": 0.40 },
+    "12-13-14-15-16-17-18-19-20-21-22-23-24-25-26-27-28-29-30-31-32-33": { "description": "Attività manifatturiere", "coefficient": 0.67 },
+    "35": { "description": "Fornitura energia elettrica, gas", "coefficient": 0.40 },
+    "36-37-38-39": { "description": "Fornitura acqua, reti fognarie, gestione rifiuti", "coefficient": 0.40 },
+    "49-50-51-52-53": { "description": "Trasporto e magazzinaggio", "coefficient": 0.40 },
+    "58-59-60-61-62-63": { "description": "Servizi di informazione e comunicazione", "coefficient": 0.67 },
+    "77-78-79-80-81-82": { "description": "Noleggio, agenzie viaggio, servizi alle imprese", "coefficient": 0.67 },
+    "84": { "description": "Amministrazione pubblica e difesa", "coefficient": 0.78 },
+    "90-91-92-93": { "description": "Attività artistiche, sportive, intrattenimento", "coefficient": 0.67 },
+    "94-95-96": { "description": "Altre attività di servizi", "coefficient": 0.67 },
+    "97-98": { "description": "Attività di famiglie e convivenze", "coefficient": 0.67 },
+    "99": { "description": "Organizzazioni extraterritoriali", "coefficient": 0.78 }
+  }
+}
