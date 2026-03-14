@@ -1,0 +1,33 @@
+services:
+  vault-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${VAULT_DB_NAME:-fiscalai_vault}
+      POSTGRES_USER: ${VAULT_DB_USER:-vault}
+      POSTGRES_PASSWORD: ${VAULT_DB_PASSWORD:?VAULT_DB_PASSWORD is required}
+    ports:
+      - "${VAULT_DB_PORT:-5432}:5432"
+    volumes:
+      - vault_pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${VAULT_DB_USER:-vault} -d ${VAULT_DB_NAME:-fiscalai_vault}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  vault-redis:
+    image: redis:7-alpine
+    ports:
+      - "${VAULT_REDIS_PORT:-6379}:6379"
+    volumes:
+      - vault_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  vault_pgdata:
+  vault_redis_data:
