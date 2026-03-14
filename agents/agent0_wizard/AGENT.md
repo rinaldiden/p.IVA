@@ -1,50 +1,53 @@
-# Agent0 — Wizard & Bootstrap
+# Agent0 — Wizard & Onboarding
 
 ## Responsabilità
-- **Firma digitale**: guida l'utente passo-passo nel processo di ottenimento (Camera di Commercio, SPID, o provider certificato). Una volta ottenuta, archivia le credenziali nel Vault per uso automatico successivo
-- **Credenziali SPID/CIE**: acquisisce e archivia nel Vault le credenziali per accesso ai servizi AdE e INPS
-- **Apertura P.IVA**: compila il modello AA9/12 e lo trasmette tramite intermediario abilitato (da definire)
-- **Multi-ATECO**: supporta registrazione di più codici ATECO con identificazione del primario
-- **Iscrizione CCIAA** via ComUnica (se attività commerciale/artigiana), tramite intermediario
-- **Iscrizione INPS** gestione separata o artigiani/commercianti, tramite intermediario
-- **SUAP telematico** se richiesto dall'ATECO
-- **Riduzione contributiva 35%**: se artigiano/commerciante, guida nella richiesta entro il 28/02 di ogni anno
-- Simulare imposta attesa sul fatturato stimato (15% o 5% per primi 5 anni)
-- Spiegare scadenze, accantonamenti mensili, funzionamento del regime
-- Configurare: banca collegata (Open Banking PSD2), canali ricezione documenti
-- **Attivare conservazione sostitutiva** gratuita AdE
-- Inizializzare profilo contribuente nel Supervisor
+- **Onboarding interattivo** in 6 step: dati base, attività ATECO, stima ricavi, INPS, simulazione fiscale, spiegazione personalizzata
+- **Simulazione fiscale** via Agent3 + Agent3b (dual deterministic engine)
+- **Confronto regimi** forfettario vs ordinario con risparmio stimato
+- **Suggerimento ATECO** via Claude API (top 3 con coefficiente e motivazione)
+- **Spiegazione personalizzata** in linguaggio naturale via Claude API
+- **Scadenzario** con date e importi per primo anno e anni successivi
+- **Calcolo rata mensile** da accantonare (imposta + INPS) / 12
+- **Warning soglie** ricavi (70k alert precoce, 85k uscita forfettario)
 
-## Input
-- Dati anagrafici dell'utente
-- Codici ATECO desiderati (uno o più)
-- Fatturato stimato annuo (per ATECO se multi)
-- Preferenze canali comunicazione (app/email)
-- Dati bancari per collegamento PSD2
-- Credenziali SPID/CIE per processo firma digitale e accesso servizi
+## NON implementato (fase 2, post-Vault)
+- Firma digitale
+- Apertura P.IVA (modello AA9/12)
+- SPID/CIE
+- Iscrizione CCIAA / INPS
+- Connessione reale PSD2
 
-## Output
-- Credenziali firma digitale archiviate nel Vault
-- Credenziali SPID archiviate nel Vault
-- P.IVA aperta e registrata (tramite intermediario abilitato)
-- Iscrizione CCIAA completata se applicabile
-- Iscrizione INPS completata
-- Conservazione sostitutiva AdE attivata
-- Configurazione iniziale del sistema (banca, canali, parametri fiscali)
-- Report di onboarding con stima imposte e scadenzario
-- Profilo contribuente inizializzato nel Supervisor (con tutti i codici ATECO)
+## Architettura
+
+```
+CLI → OnboardingWizard (6 step)
+          │
+          ├─ Explainer (Claude API) → suggerimenti ATECO, spiegazioni
+          │
+          └─ Simulator
+               ├─ Agent3 (calcola)
+               ├─ Agent3b (valida) — blocco se divergenza
+               └─ Confronto regimi + scadenzario
+```
+
+## File
+- `wizard.py` — orchestratore principale
+- `simulator.py` — wrappa Agent3+3b, confronto regimi, scadenzario
+- `explainer.py` — Claude API (suggest_ateco, explain_simulation, explain_inps, answer_question)
+- `onboarding.py` — raccolta dati 6 step interattivi
+- `models.py` — ProfiloContribuente, SimulationResult, Scadenza, ATECOSuggestion
+- `redis_publisher.py` — pubblica su `fiscalai:agent0:onboarding_complete`
+- `cli.py` — `python -m agents.agent0_wizard.cli [--no-claude] [--no-redis]`
+
+## Evento Redis
+
+Stream: `fiscalai:agent0:onboarding_complete`
+
+Payload: profilo contribuente completo + risultato simulazione
 
 ## Integrazioni
-- `integrations/vault/` — Archiviazione sicura credenziali (firma, SPID, PSD2)
-- `integrations/firma_digitale/` — Guida ottenimento firma
-- `integrations/agenzia_entrate/` — Invio AA9/12 via intermediario + attivazione conservazione
-- `integrations/cciaa_comunica/` — Iscrizione ComUnica via intermediario
-- `integrations/inps/` — Iscrizione gestione separata/artigiani
-- `integrations/open_banking/` — Configurazione PSD2
-- `integrations/invio_telematico/` — Intermediario abilitato (da scegliere)
-- `agents/supervisor/` — Inizializzazione profilo contribuente
-
-## Note
-- La firma digitale NON viene ottenuta automaticamente: richiede riconoscimento de visu o SPID/CIE livello 2+. Agent0 guida l'utente e poi archivia le credenziali nel Vault
-- L'apertura P.IVA passa tramite intermediario abilitato
-- Tutte le credenziali sensibili vanno SOLO nel Vault, mai nel Supervisor in chiaro
+- `agents/agent3_calculator/` — calcolo deterministico
+- `agents/agent3b_validator/` — validazione indipendente
+- `shared/ateco_coefficients.json` — catalogo ATECO con coefficienti
+- `shared/inps_rates.json` — parametri INPS per anno
+- Claude API — linguaggio naturale (model: claude-sonnet-4-20250514)
