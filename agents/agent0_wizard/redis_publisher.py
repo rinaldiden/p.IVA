@@ -12,7 +12,7 @@ import redis
 
 from .models import ProfiloContribuente, SimulationResult
 
-STREAM = "fiscalai:agent0:onboarding_complete"
+STREAM = "fiscalai:agent0:events"
 
 
 class _DecimalEncoder(json.JSONEncoder):

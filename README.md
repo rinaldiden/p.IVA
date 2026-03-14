@@ -3,7 +3,7 @@
 **Sistema multi-agente completamente autonomo per gestire il ciclo fiscale completo di un contribuente forfettario italiano.**
 
 Dalla apertura della P.IVA fino all'invio telematico della dichiarazione dei redditi.
-Zero commercialista. Zero intervento umano.
+Obiettivo: zero commercialista, zero intervento umano. Stato attuale: motore fiscale e infrastruttura completati, agenti operativi in sviluppo.
 
 ---
 
@@ -233,6 +233,28 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 12. **Agent10** — NormativeWatcher: autonomia normativa completa
 
 > Il Vault è prerequisito bloccante per Agent0: firma digitale e SPID non possono essere gestiti senza un sistema sicuro di credential management.
+
+---
+
+## Stato Implementazione
+
+| Componente | Stato | Note |
+|---|---|---|
+| Vault | MVP ✅ | AES-256-GCM, policy per agente, audit trail, test integration |
+| Agent0 — Wizard | MVP ✅ | Onboarding 6 step, simulatore, explainer Claude, CLI |
+| Agent3 — Calculator | MVP ✅ | Calcolo deterministico, multi-ATECO, F24, checksum |
+| Agent3b — Validator | MVP ✅ | Validazione indipendente, blocco su 1 cent divergenza |
+| Agent10 — NormativeWatcher | MVP ✅ | RSS GU, diff engine, scheduler, audit trail |
+| Shared Messaging | MVP ✅ | Redis Streams, publisher/consumer, supervisor listener |
+| Supervisor | Scheletro 🟡 | Solo persistenza profili, no orchestrazione |
+| Agent1 — Collector | Non iniziato ❌ | |
+| Agent2 — Categorizer | Non iniziato ❌ | |
+| Agent4 — Compliance | Non iniziato ❌ | |
+| Agent5 — Declaration | Non iniziato ❌ | |
+| Agent6 — Scheduler | Non iniziato ❌ | |
+| Agent7 — Advisor | Non iniziato ❌ | |
+| Agent8 — Invoicing | Non iniziato ❌ | |
+| Agent9 — Notifier | Non iniziato ❌ | |
 
 ---
 

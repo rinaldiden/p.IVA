@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import logging
 import os
@@ -48,6 +49,7 @@ def _set_nested(data: dict, dotted_key: str, value: str) -> None:
 
 def apply_change(change: ParameterChange) -> bool:
     """Apply a single parameter change to the target shared/ file.
+    Uses file locking to prevent read-modify-write race conditions.
     Returns True if applied successfully."""
     file_path = _SHARED_DIR / Path(change.file_destinazione).name
 
@@ -55,14 +57,21 @@ def apply_change(change: ParameterChange) -> bool:
         logger.error("Target file does not exist: %s", file_path)
         return False
 
+    lock_path = file_path.with_suffix(file_path.suffix + ".lock")
     try:
-        data = _load_json(file_path)
-    except (json.JSONDecodeError, FileNotFoundError) as e:
-        logger.error("Failed to load %s: %s", file_path, e)
-        return False
+        with open(lock_path, "w") as lock_fh:
+            fcntl.flock(lock_fh, fcntl.LOCK_EX)
+            try:
+                data = _load_json(file_path)
+            except (json.JSONDecodeError, FileNotFoundError) as e:
+                logger.error("Failed to load %s: %s", file_path, e)
+                return False
 
-    _set_nested(data, change.nome_parametro, change.valore_nuovo)
-    _save_json(file_path, data)
+            _set_nested(data, change.nome_parametro, change.valore_nuovo)
+            _save_json(file_path, data)
+    except OSError as e:
+        logger.error("File locking failed for %s: %s", file_path, e)
+        return False
 
     logger.info(
         "Applied: %s = %s → %s (effective %s)",

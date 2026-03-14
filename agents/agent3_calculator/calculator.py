@@ -77,14 +77,24 @@ def _get_inps_rates(anno: int, gestione: str) -> dict[str, Any]:
 
     rates = year_data[gestione]
 
-    # Check for null values (year not yet updated)
-    for key, val in rates.items():
-        if key.startswith("_"):
-            continue
-        if val is None:
+    # Check for null values (year not yet updated) — fallback to previous year
+    has_nulls = any(
+        v is None for k, v in rates.items() if not k.startswith("_")
+    )
+    if has_nulls:
+        prev_anno = str(anno - 1)
+        if prev_anno in data and gestione in data[prev_anno]:
+            import logging
+            logging.getLogger(__name__).warning(
+                "INPS %s/%s has null values — falling back to %s. "
+                "Update shared/inps_rates.json with the current year's circular.",
+                gestione, anno, prev_anno,
+            )
+            rates = data[prev_anno][gestione]
+        else:
             raise ValueError(
-                f"INPS rate '{key}' for {gestione}/{anno} is null. "
-                f"Update shared/inps_rates.json with the current year's circular."
+                f"INPS rate for {gestione}/{anno} has null values and "
+                f"no fallback year {anno - 1} available."
             )
 
     return rates

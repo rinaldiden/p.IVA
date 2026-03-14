@@ -10,7 +10,7 @@ from typing import Any
 
 import redis
 
-STREAM = "fiscalai:agent3:calculation_done"
+STREAM = "fiscalai:agent3:events"
 
 
 class _DecimalEncoder(json.JSONEncoder):

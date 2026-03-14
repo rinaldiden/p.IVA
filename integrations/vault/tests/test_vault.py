@@ -15,9 +15,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Set test env vars before importing config
-os.environ.setdefault("VAULT_MASTER_SECRET", "test-master-secret-for-testing-only")
-os.environ.setdefault("VAULT_DB_PASSWORD", "test-password")
+# Validate required env vars — never fall back to hardcoded secrets
+_REQUIRED_VAULT_VARS = ("VAULT_MASTER_SECRET", "VAULT_DB_PASSWORD")
+_missing = [v for v in _REQUIRED_VAULT_VARS if not os.environ.get(v)]
+if _missing:
+    pytest.skip(
+        f"Vault integration tests require env vars: {', '.join(_missing)}. "
+        "Set them before running (see .env.example).",
+        allow_module_level=True,
+    )
 os.environ.setdefault("VAULT_PBKDF2_ITERATIONS", "1000")  # Fast for tests
 
 from integrations.vault.config import VaultConfig

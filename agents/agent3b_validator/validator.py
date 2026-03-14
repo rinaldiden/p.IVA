@@ -72,11 +72,25 @@ def _parametri_previdenziali(anno: int, tipo: str) -> dict[str, Any]:
     tipo = tipo_chiave
 
     parametri = sezione[tipo]
-    for k, v in parametri.items():
-        if not k.startswith("_") and v is None:
+
+    # Fallback all'anno precedente se ci sono valori nulli
+    ha_nulli = any(
+        v is None for k, v in parametri.items() if not k.startswith("_")
+    )
+    if ha_nulli:
+        anno_prec = str(anno - 1)
+        if anno_prec in dati and tipo in dati[anno_prec]:
+            import logging
+            logging.getLogger(__name__).warning(
+                "INPS %s/%s ha valori nulli — fallback a %s. "
+                "Aggiornare shared/inps_rates.json.",
+                tipo, anno, anno_prec,
+            )
+            parametri = dati[anno_prec][tipo]
+        else:
             raise ValueError(
-                f"Parametro INPS '{k}' per {tipo}/{anno} è nullo. "
-                f"Aggiornare shared/inps_rates.json."
+                f"Parametro INPS per {tipo}/{anno} ha valori nulli e "
+                f"nessun anno precedente {anno - 1} disponibile."
             )
 
     return parametri
