@@ -27,28 +27,34 @@ Il regime forfettario è il più semplice che esista: aliquota fissa, niente IVA
 │                     │   Contribuente     │                            │
 │                     └────────┬───────────┘                            │
 │                              │ coordina tutto                         │
+│                              │                                        │
 │  ┌──────────┐    ┌───────────┤    ┌──────────┐    ┌──────────┐       │
-│  │ Agent0   │    │ Agent1    │    │ Agent2   │    │ Agent3   │       │
-│  │ Wizard & │───▶│ Collector │───▶│Categori- │───▶│Calcula-  │       │
-│  │Bootstrap │    │           │    │zer       │    │tor (det.)│       │
-│  └──────────┘    └───────────┘    └──────────┘    └────┬─────┘       │
-│       │               │                               │             │
-│       │          ┌───────────┐    ┌──────────┐   ┌──────────┐        │
-│       │          │    OCR    │    │ Agent8   │   │ Agent3b  │        │
-│       │          │ Subagent  │    │Invoicing │   │Validator │        │
-│       │          └───────────┘    │(fatture) │   │  (det.)  │        │
-│       │                          └──────────┘   └────┬─────┘        │
-│       │                               │              │              │
-│       │  ┌──────────┐    ┌──────────┐ │  ┌──────────┐│              │
-│       │  │ Agent4   │    │ Agent5   │ │  │ Agent6   ││              │
-│       │  │Compliance│◀──▶│Declara-  │◀┘  │Scheduler │◀┘             │
-│       │  │ Checker  │    │tion Gen  │◀───│  + F24   │               │
-│       │  └──────────┘    └──────────┘    └──────────┘               │
-│       │       │                               │                     │
-│       │  ┌──────────┐              ┌──────────┐                     │
-│       └─▶│ Agent7   │              │ Agent9   │◀────────────────    │
-│          │ Advisor  │              │ Notifier │                     │
-│          └──────────┘              └──────────┘                     │
+│  │ Agent0   │    │ Agent1    │    │ Agent8   │    │ Agent2   │       │
+│  │ Wizard & │───▶│ Collector │───▶│Invoicing │───▶│Categori- │       │
+│  │Bootstrap │    │           │    │(fatture) │    │zer       │       │
+│  └──────────┘    └─────┬─────┘    └──────────┘    └────┬─────┘       │
+│       │                │               │               │             │
+│       │          ┌───────────┐          │          ┌──────────┐       │
+│       │          │    OCR    │          │          │ Agent3   │       │
+│       │          │ Subagent  │          │          │Calcula-  │       │
+│       │          └───────────┘          │          │tor (det.)│       │
+│       │                                 │          └────┬─────┘       │
+│       │                                 │               │            │
+│       │                                 │          ┌──────────┐       │
+│       │                                 │          │ Agent3b  │       │
+│       │                                 │          │Validator │       │
+│       │                                 │          │  (det.)  │       │
+│       │                                 │          └────┬─────┘       │
+│       │  ┌──────────┐    ┌──────────┐   │  ┌──────────┐ │            │
+│       │  │ Agent4   │    │ Agent5   │   │  │ Agent6   │ │            │
+│       │  │Compliance│◀──▶│Declara-  │◀──┘  │Scheduler │◀┘            │
+│       │  │ Checker  │    │tion Gen  │◀─────│  + F24   │              │
+│       │  └──────────┘    └──────────┘      └──────────┘              │
+│       │       │                                 │                    │
+│       │  ┌──────────┐                    ┌──────────┐                │
+│       └─▶│ Agent7   │                    │ Agent9   │◀───────────    │
+│          │ Advisor  │                    │ Notifier │                │
+│          └──────────┘                    └──────────┘                │
 │                                                                       │
 │  ┌────────────────────────────────────────────────────────────────┐   │
 │  │                    Vault — Auth Agent                          │   │
@@ -73,7 +79,7 @@ Fonte di verità unica. Mantiene profilo completo (supporto multi-ATECO), storic
 Guida l'utente nell'ottenimento della firma digitale e archivia le credenziali nel Vault. Acquisisce credenziali SPID per accesso ai servizi AdE/INPS. Apre la P.IVA (multi-ATECO) tramite intermediario, iscrive alla CCIAA/INPS, configura banca PSD2 e canali documenti, attiva la conservazione sostitutiva gratuita AdE.
 
 ### Agent1 — Collector
-Aggrega flussi da: SDI (fatture XML emesse e ricevute), banca PSD2 (polling movimenti), OCR Subagent (scontrini via app/email/Google Drive/Google Foto). Monitora scadenza consent PSD2 (90 giorni) e invia alert di rinnovo. Archivia automaticamente le fatture nella conservazione sostitutiva AdE.
+Aggrega flussi da: SDI (fatture XML emesse e ricevute), banca PSD2 (polling movimenti), OCR Subagent (scontrini via app/email/Google Drive/Google Foto). Gestisce il ciclo completo consent PSD2: alert a T-7 e T-3 con link re-consent, sospensione polling a T-0, backfill automatico al rinnovo. Verifica autenticità fatture ricevute da SDI e flagga anomalie. Archivia automaticamente le fatture nella conservazione sostitutiva AdE.
 
 ### Agent2 — Categorizer
 Classifica ricavi **per codice ATECO**, archivia spese, flagga anomalie. Tiene contatori ricavi separati per ATECO e aggregati, con proiezione annuale per Agent4.
@@ -85,7 +91,7 @@ Classifica ricavi **per codice ATECO**, archivia spese, flagga anomalie. Tiene c
 **Seconda implementazione indipendente**, stesso calcolo, codice diverso. Confronto campo per campo: se diverge anche di 1 centesimo, blocco totale + alert. Nessun F24 esce senza doppia validazione.
 
 ### Agent4 — Compliance Checker
-Monitora fatturazione aggregata multi-ATECO con proiezione annuale. Alert multi-soglia: **70k** (attenzione) → **80k** (avvicinamento) → **84k** (valuta rinvio) → **85k** (uscita anno prossimo) → **95k** (pericolo) → **100k** (uscita immediata + IVA retroattiva). Verifica cause ostative, esclusioni, necessità visto di conformità per crediti > 5.000€.
+Monitora fatturazione aggregata multi-ATECO con proiezione annuale. Alert multi-soglia: **70k** (attenzione) → **80k** (avvicinamento) → **84k** (valuta rinvio) → **85k** (uscita dall'anno successivo). Il superamento della soglia comporta sempre l'uscita dal regime dall'anno fiscale successivo, mai in corso d'anno (normativa aggiornata al 2024, L. 197/2022). Verifica cause ostative, esclusioni, necessità visto di conformità per crediti > 5.000€.
 
 ### Agent5 — Declaration Generator
 Compila Modello Redditi PF con Quadro LM multi-ATECO + Quadro RS. Firma tramite Vault, trasmette via intermediario abilitato.
@@ -97,10 +103,10 @@ Genera F24 da template con codici tributo, importi validati e **compensazione cr
 Analisi proattiva, simulazione forfettario vs ordinario vs SRL, pianificazione fiscale, ottimizzazione mix ATECO.
 
 ### Agent8 — Invoicing (Fatturazione Attiva)
-Emette fatture elettroniche XML conformi SDI. Regime fiscale RF19, natura N2.2, dicitura obbligatoria forfettari. Marca da bollo virtuale 2€ su fatture > 77,47€. Numerazione progressiva, note di credito, fatture PA. Monitoraggio esito SDI.
+Nel flusso principale dopo Agent1. Emette fatture elettroniche XML conformi SDI. Regime fiscale RF19, natura N2.2, dicitura obbligatoria forfettari. Marca da bollo virtuale 2€ su fatture > 77,47€. Numerazione progressiva, note di credito, fatture PA. Gestione completa esiti SDI: RC (consegnata), MC (mancata consegna → alert), NS (scartata → correzione e ri-emissione automatica entro 5 giorni), EC (esito PA), AT (attestazione).
 
 ### Agent9 — Notifier
-SMS + email + push notification 7 giorni prima di ogni scadenza. Recapita alert da tutti gli agenti.
+Hub notifiche centralizzato con sistema di priorità (informativa/normale/alta/critica). Trigger: scadenze fiscali (Agent6), scarti SDI (Agent8), consent PSD2 (Agent1), divergenza calcoli (Agent3b), soglie ricavi (Agent4), errori trasmissione (Agent5), raccomandazioni (Agent7), scadenza credenziali (Vault). Le notifiche critiche hanno retry ogni 4h fino a conferma lettura.
 
 ### Vault — Auth Agent
 Custodisce tutte le credenziali in vault dedicato HSM-backed. Gestisce sessioni SPID con 2FA, effettua login come client per gli agenti, policy di accesso per agente, audit trail di ogni accesso.
@@ -201,16 +207,19 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 
 ## Roadmap
 
-1. **Agent0 MVP** — Wizard che guida l'apertura P.IVA, stima imposte, spiega il regime
-2. **Vault** — Infrastruttura sicurezza credenziali
-3. **Supervisor** — Profilo contribuente e storico pluriennale
-4. **Agent8** — Fatturazione attiva elettronica
-5. **Agent1 + Agent2** — Collector e categorizzazione multi-ATECO
-6. **Agent3 + Agent3b** — Doppio calcolo deterministico + validazione
-7. **Agent6 + Agent9** — Scadenziario F24 con compensazioni e notifiche
-8. **Agent5** — Generazione e invio dichiarazione via intermediario
-9. **Agent4 + Agent7** — Compliance multi-soglia e advisory
-10. **App mobile** — Interfaccia utente per scontrini e dashboard
+1. **Vault** — Infrastruttura sicurezza credenziali (prerequisito bloccante per Agent0)
+2. **Agent0 MVP** — Wizard onboarding, stima imposte, spiega il regime
+3. **Supervisor** — Profilo contribuente, storico pluriennale, aggiornamenti normativi
+4. **Agent8** — Fatturazione attiva elettronica (genera ricavi da subito)
+5. **Agent1 + OCR Subagent** — Collector multi-canale + re-consent PSD2
+6. **Agent2** — Categorizzazione multi-ATECO
+7. **Agent3 + Agent3b** — Doppio calcolo deterministico + validazione
+8. **Agent6 + Agent9** — Scadenzario F24 con compensazioni e notifiche
+9. **Agent5** — Generazione e invio dichiarazione via intermediario
+10. **Agent4 + Agent7** — Compliance multi-soglia e advisory
+11. **App mobile** — Scontrini e dashboard
+
+> Il Vault è prerequisito bloccante per Agent0: firma digitale e SPID non possono essere gestiti senza un sistema sicuro di credential management.
 
 ---
 
