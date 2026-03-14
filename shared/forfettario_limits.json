@@ -1,0 +1,13 @@
+{
+  "_description": "Limiti e parametri del regime forfettario — monitorati da Agent10 NormativeWatcher",
+  "_source": "L. 190/2014 art. 1 c. 54-89, modificata da L. 197/2022",
+  "_ultimo_aggiornamento": "2024-01-01",
+  "soglia_ricavi": "85000",
+  "aliquota_ordinaria": "0.15",
+  "aliquota_agevolata": "0.05",
+  "durata_regime_agevolato_anni": "5",
+  "soglia_reddito_dipendente": "30000",
+  "soglia_marca_bollo": "77.47",
+  "marca_bollo_importo": "2.00",
+  "codice_tributo_bollo": "2501"
+}

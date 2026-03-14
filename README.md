@@ -56,6 +56,12 @@ Il regime forfettario è il più semplice che esista: aliquota fissa, niente IVA
 │          │ Advisor  │                    │ Notifier │                │
 │          └──────────┘                    └──────────┘                │
 │                                                                       │
+│  ┌──────────┐                                                       │
+│  │ Agent10  │  Monitora GU, AdE, INPS, Normattiva                   │
+│  │Normative │  Aggiorna parametri shared/ dalla data di efficacia   │
+│  │ Watcher  │  Certezza bassa → human review                        │
+│  └──────────┘                                                       │
+│                                                                       │
 │  ┌────────────────────────────────────────────────────────────────┐   │
 │  │                    Vault — Auth Agent                          │   │
 │  │   Firma Digitale · SPID · PSD2 · SDI · HSM-backed            │   │
@@ -107,6 +113,9 @@ Nel flusso principale dopo Agent1. Emette fatture elettroniche XML conformi SDI.
 
 ### Agent9 — Notifier
 Hub notifiche centralizzato con sistema di priorità (informativa/normale/alta/critica). Trigger: scadenze fiscali (Agent6), scarti SDI (Agent8), consent PSD2 (Agent1), divergenza calcoli (Agent3b), soglie ricavi (Agent4), errori trasmissione (Agent5), raccomandazioni (Agent7), scadenza credenziali (Vault). Le notifiche critiche hanno retry ogni 4h fino a conferma lettura.
+
+### Agent10 — NormativeWatcher
+Monitora automaticamente Gazzetta Ufficiale, Agenzia delle Entrate, INPS e Normattiva. Aggiorna i parametri fiscali del sistema (coefficienti ATECO, aliquote INPS, soglie, scadenze) dalla data di efficacia della norma, non dalla data di pubblicazione. Certezza bassa → human review. Audit trail immutabile di ogni modifica normativa applicata.
 
 ### Vault — Auth Agent
 Custodisce tutte le credenziali in vault dedicato HSM-backed. Gestisce sessioni SPID con 2FA, effettua login come client per gli agenti, policy di accesso per agente, audit trail di ogni accesso.
@@ -180,7 +189,8 @@ p.IVA/
 │   ├── agent6_scheduler/        # Scadenzario e F24 + compensazioni
 │   ├── agent7_advisor/          # Advisory proattivo
 │   ├── agent8_invoicing/        # Fatturazione attiva elettronica
-│   └── agent9_notifier/         # Notifiche
+│   ├── agent9_notifier/         # Notifiche
+│   └── agent10_normative/      # Monitoraggio normativo autonomo
 ├── integrations/
 │   ├── agenzia_entrate/         # API AdE + conservazione sostitutiva
 │   ├── open_banking/            # PSD2 + gestione consent 90gg
@@ -196,6 +206,8 @@ p.IVA/
 │   ├── f24_tax_codes.json       # Codici tributo + causali INPS (separati)
 │   ├── f24_template.json        # Template struttura F24
 │   ├── inps_rates.json          # Aliquote INPS per anno (aggiornamento annuale)
+│   ├── forfettario_limits.json  # Soglie, aliquote, limiti regime forfettario
+│   ├── messaging/              # Inter-agent Redis Streams bus
 │   └── models/
 ├── tests/
 └── docs/
@@ -218,6 +230,7 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 9. **Agent5** — Generazione e invio dichiarazione via intermediario
 10. **Agent4 + Agent7** — Compliance multi-soglia e advisory
 11. **App mobile** — Scontrini e dashboard
+12. **Agent10** — NormativeWatcher: autonomia normativa completa
 
 > Il Vault è prerequisito bloccante per Agent0: firma digitale e SPID non possono essere gestiti senza un sistema sicuro di credential management.
 

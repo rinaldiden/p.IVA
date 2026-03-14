@@ -2,7 +2,6 @@
   "_description": "Aliquote e parametri INPS per anno — aggiornamento annuale obbligatorio",
   "_source": "Circolare INPS annuale",
   "_note": "Agent Supervisor verifica ogni anno (entro gennaio) la pubblicazione della nuova circolare INPS e aggiorna questo file. Tutti i valori sono stringhe per parsing Decimal.",
-
   "2024": {
     "gestione_separata": {
       "aliquota": "0.2607",
@@ -27,7 +26,6 @@
       "riduzione_35_disponibile": true
     }
   },
-
   "2025": {
     "_status": "DA VERIFICARE — aggiornare con circolare INPS 2025",
     "gestione_separata": {
@@ -49,7 +47,6 @@
       "riduzione_35_disponibile": true
     }
   },
-
   "aggiornamento": {
     "procedura": "Ogni anno entro gennaio il Supervisor verifica la pubblicazione della circolare INPS con i nuovi parametri contributivi e aggiorna questo file",
     "fonti": [
