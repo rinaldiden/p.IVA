@@ -1,0 +1,75 @@
+{
+  "_description": "Template struttura modello F24 per generazione automatica",
+
+  "contribuente": {
+    "codice_fiscale": "",
+    "cognome_o_denominazione": "",
+    "nome": "",
+    "data_nascita": "",
+    "sesso": "",
+    "comune_nascita": "",
+    "provincia_nascita": "",
+    "domicilio_fiscale": {
+      "comune": "",
+      "provincia": "",
+      "via": "",
+      "cap": ""
+    }
+  },
+
+  "sezione_erario": {
+    "_description": "Imposte sostitutive e relative a dichiarazione redditi",
+    "righe": [
+      {
+        "codice_tributo": "",
+        "rateazione_regione_provincia": "",
+        "anno_riferimento": "",
+        "importi_a_debito": null,
+        "importi_a_credito": null
+      }
+    ],
+    "totale_a_debito": null,
+    "totale_a_credito": null,
+    "saldo": null
+  },
+
+  "sezione_inps": {
+    "_description": "Contributi previdenziali",
+    "righe": [
+      {
+        "codice_sede": "",
+        "causale_contributo": "",
+        "matricola_inps_codice_inps_filiale_azienda": "",
+        "periodo_da": "",
+        "periodo_a": "",
+        "importi_a_debito": null,
+        "importi_a_credito": null
+      }
+    ],
+    "totale_a_debito": null,
+    "totale_a_credito": null,
+    "saldo": null
+  },
+
+  "sezione_regioni_enti_locali": {
+    "_description": "Diritto camerale e addizionali",
+    "righe": [
+      {
+        "codice_ente": "",
+        "codice_tributo": "",
+        "rateazione_mese_riferimento": "",
+        "anno_riferimento": "",
+        "importi_a_debito": null,
+        "importi_a_credito": null
+      }
+    ],
+    "totale_a_debito": null,
+    "totale_a_credito": null,
+    "saldo": null
+  },
+
+  "totale_versamento": null,
+  "data_versamento": "",
+  "banca_ufficio_postale": "",
+  "iban_per_addebito": ""
+}

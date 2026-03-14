@@ -1,72 +1,98 @@
 {
-  "_description": "Scadenze fiscali annuali per contribuenti forfettari",
-  "deadlines": [
+  "_description": "Scadenze fiscali annuali per contribuenti forfettari — completo",
+
+  "imposta_sostitutiva": [
     {
-      "id": "acconto_inps_1",
-      "description": "Primo acconto contributi INPS gestione separata",
-      "date": "06-30",
-      "type": "payment",
-      "f24": true
-    },
-    {
-      "id": "saldo_imposta_sostitutiva",
+      "id": "saldo_imposta",
       "description": "Saldo imposta sostitutiva anno precedente",
+      "codice_tributo": "1792",
       "date": "06-30",
       "type": "payment",
-      "f24": true
+      "note": "Differibile al 30/07 con maggiorazione 0.40%"
     },
     {
       "id": "primo_acconto_imposta",
-      "description": "Primo acconto imposta sostitutiva anno corrente (40%)",
+      "description": "Primo acconto imposta sostitutiva (40% del totale acconti)",
+      "codice_tributo": "1790",
       "date": "06-30",
       "type": "payment",
-      "f24": true
-    },
-    {
-      "id": "saldo_imposta_sostitutiva_rateizzato",
-      "description": "Saldo e primo acconto con maggiorazione 0.40% (se differito)",
-      "date": "07-30",
-      "type": "payment",
-      "f24": true
-    },
-    {
-      "id": "acconto_inps_2",
-      "description": "Secondo acconto contributi INPS gestione separata",
-      "date": "09-30",
-      "type": "payment",
-      "f24": true
+      "note": "Dovuto se imposta anno precedente > 51.65€. Differibile al 30/07 con maggiorazione 0.40%"
     },
     {
       "id": "secondo_acconto_imposta",
-      "description": "Secondo acconto imposta sostitutiva (60%)",
+      "description": "Secondo acconto imposta sostitutiva (60% del totale acconti)",
+      "codice_tributo": "1791",
       "date": "11-30",
       "type": "payment",
-      "f24": true
-    },
-    {
-      "id": "secondo_acconto_inps",
-      "description": "Secondo acconto INPS gestione separata",
-      "date": "11-30",
-      "type": "payment",
-      "f24": true
-    },
-    {
-      "id": "dichiarazione_redditi",
-      "description": "Invio telematico Modello Redditi PF",
-      "date": "11-30",
-      "type": "declaration",
-      "f24": false
-    },
-    {
-      "id": "saldo_inps",
-      "description": "Saldo contributi INPS gestione separata",
-      "date": "06-30",
-      "type": "payment",
-      "f24": true
+      "note": "Non rateizzabile, non differibile"
     }
   ],
-  "notes": {
-    "artigiani_commercianti": "Per iscritti INPS artigiani/commercianti le scadenze contributi fissi sono trimestrali: 16/02, 16/05, 20/08, 16/11",
-    "maggiorazione_differimento": "Il versamento può essere differito di 30 giorni con maggiorazione dello 0.40%"
+
+  "inps_gestione_separata": [
+    {
+      "id": "saldo_inps_gs",
+      "description": "Saldo contributi INPS gestione separata anno precedente",
+      "date": "06-30",
+      "type": "payment",
+      "note": "Differibile al 30/07 con maggiorazione 0.40%"
+    },
+    {
+      "id": "primo_acconto_inps_gs",
+      "description": "Primo acconto contributi INPS gestione separata (40%)",
+      "date": "06-30",
+      "type": "payment"
+    },
+    {
+      "id": "secondo_acconto_inps_gs",
+      "description": "Secondo acconto contributi INPS gestione separata (60%)",
+      "date": "11-30",
+      "type": "payment"
+    }
+  ],
+
+  "inps_artigiani_commercianti": {
+    "_note": "I contributi fissi sono trimestrali. I contributi eccedenti seguono le scadenze dell'imposta sostitutiva.",
+    "fissi_trimestrali": [
+      { "id": "fisso_q1", "description": "Rata fissa trimestrale Q1", "date": "02-16", "type": "payment" },
+      { "id": "fisso_q2", "description": "Rata fissa trimestrale Q2", "date": "05-16", "type": "payment" },
+      { "id": "fisso_q3", "description": "Rata fissa trimestrale Q3", "date": "08-20", "type": "payment" },
+      { "id": "fisso_q4", "description": "Rata fissa trimestrale Q4", "date": "11-16", "type": "payment" }
+    ],
+    "eccedente_minimale": [
+      { "id": "saldo_eccedente", "description": "Saldo contributi eccedenti anno precedente", "date": "06-30", "type": "payment" },
+      { "id": "primo_acconto_eccedente", "description": "Primo acconto eccedenti (40%)", "date": "06-30", "type": "payment" },
+      { "id": "secondo_acconto_eccedente", "description": "Secondo acconto eccedenti (60%)", "date": "11-30", "type": "payment" }
+    ],
+    "riduzione_35_percento": {
+      "description": "Richiesta riduzione contributiva 35% per forfettari",
+      "scadenza_richiesta": "02-28",
+      "note": "Va richiesta ogni anno tramite cassetto previdenziale INPS. Si applica sia ai fissi che ai contributi eccedenti."
+    }
+  },
+
+  "dichiarazione": [
+    {
+      "id": "invio_redditi_pf",
+      "description": "Invio telematico Modello Redditi PF",
+      "date": "11-30",
+      "type": "declaration"
+    }
+  ],
+
+  "camera_commercio": [
+    {
+      "id": "diritto_camerale",
+      "description": "Diritto annuale Camera di Commercio",
+      "codice_tributo": "3850",
+      "date": "06-30",
+      "type": "payment",
+      "note": "Solo per iscritti CCIAA"
+    }
+  ],
+
+  "maggiorazione_differimento": {
+    "description": "Il versamento del 30/06 può essere differito al 30/07 con maggiorazione dello 0.40%",
+    "percentuale": 0.40,
+    "applicabile_a": ["saldo_imposta", "primo_acconto_imposta", "saldo_inps_gs", "primo_acconto_inps_gs", "saldo_eccedente", "primo_acconto_eccedente", "diritto_camerale"]
   }
 }

@@ -4,21 +4,22 @@
 - Inviare SMS + email 7 giorni prima di ogni scadenza fiscale
 - Notificare importo esatto da pagare
 - Supportare tutti i canali configurati dall'utente in Agent0
-- Recapitare alert da altri agenti (anomalie, soglie, divergenze calcolo)
+- Recapitare alert da altri agenti (anomalie, soglie, divergenze calcolo, raccomandazioni)
 
 ## Input
 - Scadenze e importi da Agent6
 - Alert da Agent3b (divergenza calcoli)
-- Alert da Agent4 (soglia ricavi)
+- Alert da Agent4 (soglie ricavi con spiegazione conseguenze)
 - Raccomandazioni da Agent7
 
 ## Output
 - SMS inviati via Twilio
 - Email inviate via SendGrid
-- Messaggi WhatsApp via WhatsApp Business API
-- Log di tutte le notifiche inviate
+- Push notification via app mobile
+- Log di tutte le notifiche inviate nel Supervisor
 
 ## Integrazioni
 - Twilio API — SMS
 - SendGrid API — Email
-- WhatsApp Business API — Messaggi WhatsApp
+- App mobile — Push notifications
+- `agents/supervisor/` — Log notifiche
