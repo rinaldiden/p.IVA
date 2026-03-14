@@ -40,7 +40,8 @@
     "tipo_iscrizione": "",
     "codice_sede": "",
     "matricola": "",
-    "minimale_annuo": 18415
+    "minimale_annuo": 18415,
+    "rivalsa_inps_4": true
   },
   "firma_digitale": {
     "provider": "aruba | namirial | infocert",
@@ -112,6 +113,44 @@
   ]
 }
 ```
+
+## Ciclo di vita P.IVA
+
+Il Supervisor documenta e traccia i seguenti flussi di ciclo di vita. L'implementazione è post-MVP — la documentazione serve come specifica per lo sviluppo futuro.
+
+### 1. Chiusura P.IVA
+- **Trigger**: richiesta esplicita dell'utente
+- **Prerequisito**: dichiarazione anno in corso completata e inviata
+- **Passi**:
+  1. Agent0 compila e trasmette modello di cessazione AA9/12 all'AdE (tramite intermediario)
+  2. Agent0 gestisce cancellazione INPS (chiusura posizione contributiva)
+  3. Agent0 gestisce cancellazione CCIAA (se iscritto)
+  4. Agent8 emette ultime fatture pendenti
+  5. Agent3 calcola imposte fino alla data di cessazione
+  6. Agent5 genera dichiarazione finale
+  7. Supervisor archivia lo stato come `chiusa` con data cessazione
+- **Stato profilo**: `piva.stato: "cessata"`, `piva.data_cessazione: "YYYY-MM-DD"`
+
+### 2. Variazione ATECO
+- **Trigger**: utente aggiunge o rimuove un codice attività
+- **Nessuna interruzione del servizio**
+- **Passi**:
+  1. Agent0 compila variazione AA9/12 e trasmette tramite intermediario
+  2. Supervisor aggiorna `piva.ateco_codes` con nuovo codice e coefficiente
+  3. Agent2 riceve i nuovi codici ATECO per classificazione ricavi
+  4. Agent3 ricalcola con i nuovi coefficienti (solo per ricavi post-variazione)
+  5. Se il nuovo ATECO cambia il tipo INPS (es. da professionale a commerciale), Agent0 gestisce il passaggio di gestione
+
+### 3. Transizione forzata a regime ordinario
+- **Trigger**: Agent4 rileva superamento soglia 85.000€
+- **Timeline**: dal 1° gennaio dell'anno successivo si esce dal forfettario
+- **Passi**:
+  1. Agent4 notifica via Agent9: uscita dal regime confermata
+  2. Agent7 attiva simulazione: regime ordinario vs apertura SRL
+  3. Agent7 presenta all'utente i numeri comparativi
+  4. Agent0 guida la transizione: attivazione IVA, apertura registri contabili, eventuale iscrizione a nuovo regime
+  5. Supervisor aggiorna `regime.tipo: "ordinario"` e `regime.data_uscita_forfettario`
+- **Nota**: questa transizione NON è nell'MVP — va implementata dopo Agent7
 
 ## Aggiornamento normativo annuale
 Ogni gennaio il Supervisor:

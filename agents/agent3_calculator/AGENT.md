@@ -12,10 +12,14 @@
 - Generare importi F24 con codici tributo corretti da `shared/f24_tax_codes.json`
 - Supportare **multi-ATECO**: calcoli separati per codice, poi aggregazione
 
+## Nota rivalsa INPS 4%
+Se il contribuente è in gestione separata e ha attivato la rivalsa INPS 4% (flag `rivalsa_inps_4` nel Supervisor), i ricavi arrivano da Agent2 **già al netto della rivalsa**. La rivalsa non è ricavo ai fini del forfettario — Agent3 non deve includerla nella base di calcolo del coefficiente di redditività.
+
 ## Formula completa
 ```
 Per ciascun ATECO_i:
   reddito_ATECO_i = ricavi_ATECO_i × coefficiente_ATECO_i
+  (ricavi_ATECO_i = importo fatturato AL NETTO della rivalsa INPS 4%)
 
 Reddito lordo = Σ reddito_ATECO_i
 Reddito imponibile = Reddito lordo − contributi_INPS_versati_anno
