@@ -31,3 +31,14 @@ Thumbs.db
 # Docker volumes
 pgdata/
 redis_data/
+
+# Runtime artifacts
+*.lock
+agents/agent10_normative/audit/
+agents/supervisor/data/
+shared/normative_review_queue.jsonl
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
