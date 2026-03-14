@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Nuova Fattura — FiscalAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Emetti fattura</h1>
+    <p>{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }} — Regime forfettario RF19</p>
+</div>
+
+{% if not result %}
+<form method="POST">
+    <div class="card">
+        <h2>Dati cliente</h2>
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label>Denominazione / Ragione sociale</label>
+                <input type="text" name="cliente_denominazione" required placeholder="Acme S.r.l.">
+            </div>
+            <div class="form-group">
+                <label>Partita IVA</label>
+                <input type="text" name="cliente_piva" placeholder="09876543210">
+            </div>
+        </div>
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label>Codice Fiscale</label>
+                <input type="text" name="cliente_cf" placeholder="09876543210">
+            </div>
+            <div class="form-group">
+                <label>Codice SDI</label>
+                <input type="text" name="cliente_sdi" placeholder="ABCDEFG" value="0000000" maxlength="7">
+            </div>
+        </div>
+        <div class="grid grid-3">
+            <div class="form-group">
+                <label>Indirizzo</label>
+                <input type="text" name="cliente_indirizzo" placeholder="Via Milano 42">
+            </div>
+            <div class="form-group">
+                <label>CAP — Comune</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" name="cliente_cap" placeholder="20100" maxlength="5" style="width: 80px;">
+                    <input type="text" name="cliente_comune" placeholder="Milano">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Provincia</label>
+                <input type="text" name="cliente_provincia" placeholder="MI" maxlength="2" style="width: 80px;">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Dati fattura</h2>
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label>Data fattura</label>
+                <input type="date" name="data_fattura" required value="2024-03-31">
+            </div>
+            <div class="form-group">
+                <label>Anno fatturazione (per numerazione)</label>
+                <select name="anno_fattura">
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Linee fattura</h2>
+        <div style="display: grid; grid-template-columns: 3fr 1fr 1fr; gap: 8px; margin-bottom: 4px;">
+            <span style="font-size: 12px; color: var(--text2);">Descrizione</span>
+            <span style="font-size: 12px; color: var(--text2);">Quantita</span>
+            <span style="font-size: 12px; color: var(--text2);">Prezzo unitario (EUR)</span>
+        </div>
+        <div id="linee-container">
+            <div class="line-item" style="grid-template-columns: 3fr 1fr 1fr;">
+                <input type="text" name="linea_desc" required placeholder="Sviluppo web — marzo 2024">
+                <input type="text" name="linea_qty" value="1" placeholder="1">
+                <input type="text" name="linea_prezzo" required placeholder="3000.00">
+            </div>
+        </div>
+        <button type="button" id="add-line" class="btn btn-secondary btn-sm" style="margin-top: 8px;">
+            + Aggiungi linea
+        </button>
+    </div>
+
+    <div style="padding: 16px 0;">
+        <button type="submit" class="btn btn-primary">Genera fattura + XML</button>
+        <a href="/profilo/{{ pid }}" class="btn btn-secondary" style="margin-left: 8px;">Annulla</a>
+    </div>
+</form>
+
+{% else %}
+
+<!-- RISULTATO FATTURA -->
+<div class="card">
+    <h2>Fattura generata</h2>
+    <div class="grid grid-3">
+        <div class="stat">
+            <div class="value" style="color: var(--accent2);">{{ result.numero }}</div>
+            <div class="label">Numero</div>
+        </div>
+        <div class="stat">
+            <div class="value">{{ result.data }}</div>
+            <div class="label">Data</div>
+        </div>
+        <div class="stat">
+            <div class="value">{{ result.formato_trasmissione }}</div>
+            <div class="label">Formato SDI</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Riepilogo importi</h2>
+    <table>
+        {% for linea in result.linee %}
+        <tr>
+            <td style="color: var(--text2);">{{ linea.descrizione }}</td>
+            <td class="text-right text-mono">{{ linea.quantita }} x {{ "{:,.2f}".format(linea.prezzo_unitario) }}</td>
+            <td class="text-right text-mono" style="width: 120px;">{{ "{:,.2f}".format(linea.importo) }} EUR</td>
+        </tr>
+        {% endfor %}
+        <tr style="border-top: 2px solid var(--border);">
+            <td style="font-weight: 600;">Imponibile</td>
+            <td></td>
+            <td class="text-right text-mono" style="font-weight: 600;">{{ "{:,.2f}".format(result.imponibile) }} EUR</td>
+        </tr>
+        {% if result.rivalsa_inps_4 %}
+        <tr>
+            <td style="color: var(--blue);">Rivalsa INPS 4%</td>
+            <td></td>
+            <td class="text-right text-mono">{{ "{:,.2f}".format(result.importo_rivalsa) }} EUR</td>
+        </tr>
+        {% endif %}
+        {% if result.bollo_applicato %}
+        <tr>
+            <td style="color: var(--yellow);">Marca da bollo virtuale</td>
+            <td><span class="badge badge-yellow">imponibile > 77,47 EUR</span></td>
+            <td class="text-right text-mono">{{ "{:,.2f}".format(result.importo_bollo) }} EUR</td>
+        </tr>
+        {% endif %}
+        <tr style="border-top: 2px solid var(--accent);">
+            <td style="font-weight: 700; font-size: 16px;">TOTALE DOCUMENTO</td>
+            <td></td>
+            <td class="text-right text-mono" style="font-weight: 700; font-size: 16px; color: var(--accent2);">{{ "{:,.2f}".format(result.totale_documento) }} EUR</td>
+        </tr>
+        <tr>
+            <td style="color: var(--green);">Ricavo netto (base calcolo fiscale)</td>
+            <td></td>
+            <td class="text-right text-mono" style="color: var(--green);">{{ "{:,.2f}".format(result.ricavo_netto) }} EUR</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>Caratteristiche fiscali</h2>
+    <table>
+        <tr><td style="color: var(--text2); width: 200px;">Regime fiscale</td><td><span class="badge badge-green">{{ result.regime_fiscale }}</span> Forfettario</td></tr>
+        <tr><td style="color: var(--text2);">Natura IVA</td><td><span class="badge badge-blue">N2.2</span> Non soggetto — altri casi</td></tr>
+        <tr><td style="color: var(--text2);">Marca da bollo</td><td>{% if result.bollo_applicato %}<span class="badge badge-yellow">SI</span> 2,00 EUR virtuale{% else %}<span class="badge badge-green">NO</span> importo sotto soglia{% endif %}</td></tr>
+        <tr><td style="color: var(--text2);">Rivalsa INPS</td><td>{% if result.rivalsa_inps_4 %}<span class="badge badge-blue">4%</span> {{ "{:,.2f}".format(result.importo_rivalsa) }} EUR{% else %}Non applicata{% endif %}</td></tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>XML FatturaPA</h2>
+    <p style="color: var(--text2); margin-bottom: 12px;">{{ xml_str|length }} bytes — pronto per invio SDI</p>
+    <div class="xml-preview">{{ xml_preview }}</div>
+    {% if xml_str|length > 3000 %}
+    <p style="font-size: 12px; color: var(--text2); margin-top: 8px;">... troncato ({{ xml_str|length }} bytes totali)</p>
+    {% endif %}
+</div>
+
+<div style="padding: 16px 0; display: flex; gap: 8px;">
+    <a href="/fattura/{{ pid }}" class="btn btn-primary">Nuova fattura</a>
+    <a href="/simulazione/{{ pid }}" class="btn btn-secondary">Simulazione fiscale</a>
+    <a href="/profilo/{{ pid }}" class="btn btn-secondary">Torna al profilo</a>
+</div>
+
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('add-line')?.addEventListener('click', function() {
+    const container = document.getElementById('linee-container');
+    const div = document.createElement('div');
+    div.className = 'line-item';
+    div.style.gridTemplateColumns = '3fr 1fr 1fr';
+    div.innerHTML = `
+        <input type="text" name="linea_desc" required placeholder="Descrizione prestazione">
+        <input type="text" name="linea_qty" value="1" placeholder="1">
+        <input type="text" name="linea_prezzo" required placeholder="0.00">
+    `;
+    container.appendChild(div);
+});
+</script>
+{% endblock %}

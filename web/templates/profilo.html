@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Profilo — FiscalAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }}</h1>
+    <p>CF: {{ ana.get('codice_fiscale', '') }} &middot; ID: {{ pid[:16] }}...</p>
+</div>
+
+<div class="grid grid-3">
+    <div class="stat">
+        <div class="value">{{ ana.get('ateco_principale', '—') }}</div>
+        <div class="label">ATECO Principale</div>
+    </div>
+    <div class="stat">
+        <div class="value">{{ ana.get('gestione_inps', '—') | capitalize }}</div>
+        <div class="label">Gestione INPS</div>
+    </div>
+    <div class="stat">
+        <div class="value">{% if ana.get('regime_agevolato') %}5%{% else %}15%{% endif %}</div>
+        <div class="label">Aliquota</div>
+    </div>
+</div>
+
+<br>
+
+<div class="card">
+    <h2>Dettagli profilo</h2>
+    <table>
+        <tr><td style="color: var(--text2); width: 200px;">Comune</td><td>{{ ana.get('comune_residenza', '—') }}</td></tr>
+        <tr><td style="color: var(--text2);">Apertura P.IVA</td><td>{{ ana.get('data_apertura_piva', '—') }}</td></tr>
+        <tr><td style="color: var(--text2);">Primo anno</td><td>{% if ana.get('primo_anno') %}<span class="badge badge-green">SI</span>{% else %}<span class="badge badge-yellow">NO</span>{% endif %}</td></tr>
+        <tr><td style="color: var(--text2);">Regime agevolato</td><td>{% if ana.get('regime_agevolato') %}<span class="badge badge-green">5%</span>{% else %}<span class="badge badge-yellow">15%</span>{% endif %}</td></tr>
+        <tr><td style="color: var(--text2);">Rivalsa INPS 4%</td><td>{% if ana.get('rivalsa_inps_4') %}<span class="badge badge-blue">SI</span>{% else %}NO{% endif %}</td></tr>
+        <tr><td style="color: var(--text2);">Riduzione 35%</td><td>{% if ana.get('riduzione_inps_35') %}<span class="badge badge-blue">SI</span>{% else %}NO{% endif %}</td></tr>
+        {% if ana.get('ateco_secondari') %}
+        <tr><td style="color: var(--text2);">ATECO secondari</td><td>{{ ana.get('ateco_secondari', []) | join(', ') }}</td></tr>
+        {% endif %}
+    </table>
+</div>
+
+<div style="display: flex; gap: 8px; padding: 16px 0;">
+    <a href="/simulazione/{{ pid }}" class="btn btn-primary">Simulazione fiscale</a>
+    <a href="/fattura/{{ pid }}" class="btn btn-secondary">Emetti fattura</a>
+    <form method="POST" action="/profilo/{{ pid }}/delete" style="margin-left: auto;"
+          onsubmit="return confirm('Eliminare questo profilo?')">
+        <button type="submit" class="btn btn-danger btn-sm">Elimina</button>
+    </form>
+</div>
+{% endblock %}

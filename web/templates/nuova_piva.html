@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Nuova P.IVA — FiscalAI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Apri nuova P.IVA</h1>
+    <p>Registra un nuovo contribuente forfettario</p>
+</div>
+
+<form method="POST" action="/nuova-piva">
+    <div class="card">
+        <h2>Dati anagrafici</h2>
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" required placeholder="Maria">
+            </div>
+            <div class="form-group">
+                <label>Cognome</label>
+                <input type="text" name="cognome" required placeholder="Rossi">
+            </div>
+        </div>
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label>Codice Fiscale</label>
+                <input type="text" name="codice_fiscale" required placeholder="RSSMRA85M41H501Z"
+                       maxlength="16" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+                <label>Comune di residenza</label>
+                <input type="text" name="comune_residenza" required placeholder="Roma">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Dati fiscali</h2>
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label>Data apertura P.IVA</label>
+                <input type="date" name="data_apertura" required value="2024-01-15">
+            </div>
+            <div class="form-group">
+                <label>Codice ATECO principale</label>
+                <select name="ateco_principale" required id="ateco-select">
+                    {% for code, info in ateco_codes.items() %}
+                    <option value="{{ code }}">{{ code }} — {{ info.description }} ({{ (info.coefficient|float * 100)|int }}%)</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>ATECO secondari (opzionale, separati da virgola)</label>
+            <input type="text" name="ateco_secondari" placeholder="74.10.21, 73.11.02">
+            <div class="hint">Lascia vuoto se hai un solo codice ATECO</div>
+        </div>
+        <div class="form-group">
+            <label>Gestione INPS</label>
+            <select name="gestione_inps">
+                <option value="separata">Gestione Separata (professionisti, consulenti)</option>
+                <option value="artigiani">Artigiani</option>
+                <option value="commercianti">Commercianti</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Opzioni</h2>
+        <div class="checkbox-row">
+            <input type="checkbox" name="primo_anno" id="primo_anno" checked>
+            <label for="primo_anno">Primo anno di attivita (no acconti)</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" name="regime_agevolato" id="regime_agevolato" checked>
+            <label for="regime_agevolato">Regime agevolato 5% (primi 5 anni)</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" name="rivalsa_4" id="rivalsa_4">
+            <label for="rivalsa_4">Applica rivalsa INPS 4% in fattura</label>
+        </div>
+        <div class="checkbox-row">
+            <input type="checkbox" name="riduzione_35" id="riduzione_35">
+            <label for="riduzione_35">Riduzione contributi INPS 35% (artigiani/commercianti)</label>
+        </div>
+    </div>
+
+    <div style="padding: 16px 0;">
+        <button type="submit" class="btn btn-primary">Crea P.IVA</button>
+        <a href="/" class="btn btn-secondary" style="margin-left: 8px;">Annulla</a>
+    </div>
+</form>
+{% endblock %}
