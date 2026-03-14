@@ -18,97 +18,118 @@ Il regime forfettario è il più semplice che esista: aliquota fissa, niente IVA
 ## Architettura
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                           FiscalAI                                   │
-│                                                                      │
-│                    ┌────────────────────┐                            │
-│                    │    SUPERVISOR      │                            │
-│                    │ Profilo & Storico  │                            │
-│                    │   Contribuente     │                            │
-│                    └────────┬───────────┘                            │
-│                             │ coordina tutto                        │
-│  ┌──────────┐    ┌──────────┴┐    ┌──────────┐    ┌──────────┐     │
-│  │ Agent0   │    │ Agent1    │    │ Agent2   │    │ Agent3   │     │
-│  │ Wizard & │───▶│ Collector │───▶│Categori- │───▶│Calcula-  │     │
-│  │Bootstrap │    │           │    │zer       │    │tor (LLM) │     │
-│  └──────────┘    └───────────┘    └──────────┘    └────┬─────┘     │
-│       │               │                               │           │
-│       │          ┌───────────┐                   ┌──────────┐      │
-│       │          │    OCR    │                   │ Agent3b  │      │
-│       │          │ Subagent  │                   │Validator │      │
-│       │          └───────────┘                   │(determ.) │      │
-│       │                                          └────┬─────┘      │
-│       │  ┌──────────┐    ┌──────────┐    ┌──────────┐ │            │
-│       │  │ Agent4   │    │ Agent5   │    │ Agent6   │ │            │
-│       │  │Compliance│◀──▶│Declara-  │◀───│Scheduler │◀┘            │
-│       │  │ Checker  │    │tion Gen  │    │          │              │
-│       │  └──────────┘    └──────────┘    └──────────┘              │
-│       │       │                               │                    │
-│       │  ┌──────────┐              ┌──────────┐                    │
-│       └─▶│ Agent7   │              │ Agent9   │◀───────────────    │
-│          │ Advisor  │              │ Notifier │                    │
-│          └──────────┘              └──────────┘                    │
-│                                                                      │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │                  Integrations Layer                           │   │
-│  │  SDI · Open Banking · Agenzia Entrate · INPS · CCIAA        │   │
-│  │  Firma Digitale · Intermediario Abilitato                    │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│                            FiscalAI                                   │
+│                                                                       │
+│                     ┌────────────────────┐                            │
+│                     │    SUPERVISOR      │                            │
+│                     │ Profilo & Storico  │                            │
+│                     │   Contribuente     │                            │
+│                     └────────┬───────────┘                            │
+│                              │ coordina tutto                         │
+│  ┌──────────┐    ┌───────────┤    ┌──────────┐    ┌──────────┐       │
+│  │ Agent0   │    │ Agent1    │    │ Agent2   │    │ Agent3   │       │
+│  │ Wizard & │───▶│ Collector │───▶│Categori- │───▶│Calcula-  │       │
+│  │Bootstrap │    │           │    │zer       │    │tor (det.)│       │
+│  └──────────┘    └───────────┘    └──────────┘    └────┬─────┘       │
+│       │               │                               │             │
+│       │          ┌───────────┐    ┌──────────┐   ┌──────────┐        │
+│       │          │    OCR    │    │ Agent8   │   │ Agent3b  │        │
+│       │          │ Subagent  │    │Invoicing │   │Validator │        │
+│       │          └───────────┘    │(fatture) │   │  (det.)  │        │
+│       │                          └──────────┘   └────┬─────┘        │
+│       │                               │              │              │
+│       │  ┌──────────┐    ┌──────────┐ │  ┌──────────┐│              │
+│       │  │ Agent4   │    │ Agent5   │ │  │ Agent6   ││              │
+│       │  │Compliance│◀──▶│Declara-  │◀┘  │Scheduler │◀┘             │
+│       │  │ Checker  │    │tion Gen  │◀───│  + F24   │               │
+│       │  └──────────┘    └──────────┘    └──────────┘               │
+│       │       │                               │                     │
+│       │  ┌──────────┐              ┌──────────┐                     │
+│       └─▶│ Agent7   │              │ Agent9   │◀────────────────    │
+│          │ Advisor  │              │ Notifier │                     │
+│          └──────────┘              └──────────┘                     │
+│                                                                       │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │                    Vault — Auth Agent                          │   │
+│  │   Firma Digitale · SPID · PSD2 · SDI · HSM-backed            │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │                   Integrations Layer                           │   │
+│  │  SDI · Open Banking · Agenzia Entrate · INPS · CCIAA         │   │
+│  │  Conservazione Sostitutiva · Intermediario Abilitato          │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Agenti
 
-### Supervisor — Profilo Contribuente & Coordinamento
-Fonte di verità unica per tutti i dati del contribuente. Mantiene profilo completo, storico pluriennale (ricavi, imposte, dichiarazioni, F24 anno per anno), coordina il flusso tra agenti e archivia ogni documento generato.
+### Supervisor — Profilo Contribuente, Storico & Coordinamento
+Fonte di verità unica. Mantiene profilo completo (supporto multi-ATECO), storico pluriennale, crediti d'imposta anno su anno, audit trail. Ogni gennaio verifica nuove circolari INPS e aggiornamenti normativi, aggiorna i parametri di sistema.
 
 ### Agent0 — Wizard & Bootstrap
-Guida l'utente nell'ottenimento della firma digitale (Camera di Commercio, SPID, provider certificato) e poi incamera le credenziali per uso automatico. Apre la P.IVA tramite intermediario abilitato, iscrive alla CCIAA/INPS, configura banca PSD2 e canali documenti. Gestisce la richiesta annuale di riduzione contributiva 35%.
+Guida l'utente nell'ottenimento della firma digitale e archivia le credenziali nel Vault. Acquisisce credenziali SPID per accesso ai servizi AdE/INPS. Apre la P.IVA (multi-ATECO) tramite intermediario, iscrive alla CCIAA/INPS, configura banca PSD2 e canali documenti, attiva la conservazione sostitutiva gratuita AdE.
 
 ### Agent1 — Collector
-Aggrega flussi da tre canali: SDI (fattura elettronica XML), banca PSD2 (polling movimenti), OCR Subagent (foto scontrini via app/email/Google Drive/Google Foto). Input continuo, non solo a fine anno.
+Aggrega flussi da: SDI (fatture XML emesse e ricevute), banca PSD2 (polling movimenti), OCR Subagent (scontrini via app/email/Google Drive/Google Foto). Monitora scadenza consent PSD2 (90 giorni) e invia alert di rinnovo. Archivia automaticamente le fatture nella conservazione sostitutiva AdE.
 
 ### Agent2 — Categorizer
-Classifica ricavi per tipo, archivia spese per documentazione gestionale, flagga anomalie, tiene il contatore ricavi aggiornato e monitora il trend di fatturazione con proiezione annuale.
+Classifica ricavi **per codice ATECO**, archivia spese, flagga anomalie. Tiene contatori ricavi separati per ATECO e aggregati, con proiezione annuale per Agent4.
 
-### Agent3 — Calculator
-Calcola imposta sostitutiva (coefficiente redditività ATECO × ricavi × aliquota), contributi INPS (gestione separata o artigiani/commercianti con riduzione 35%), acconti e saldo. Genera importi F24 con codici tributo corretti.
+### Agent3 — Calculator (deterministico)
+**Python puro, zero LLM.** Calcola per ciascun ATECO: `ricavi × coefficiente`. Poi: `reddito_imponibile = Σ(ricavi_ATECO × coeff) − contributi_INPS_versati`. Imposta sostitutiva, contributi INPS (con riduzione 35%), acconti, saldo, compensazione crediti. Supporta multi-ATECO.
 
 ### Agent3b — Validator (deterministico)
-Ricalcola tutto indipendentemente da Agent3 usando **puro codice Python, zero LLM**. Aritmetica, tabelle e regole fiscali codificate. Se i risultati di Agent3 e Agent3b coincidono il flusso prosegue, se divergono si blocca tutto e parte l'alert. Nessun F24 esce senza doppia validazione.
+**Seconda implementazione indipendente**, stesso calcolo, codice diverso. Confronto campo per campo: se diverge anche di 1 centesimo, blocco totale + alert. Nessun F24 esce senza doppia validazione.
 
 ### Agent4 — Compliance Checker
-Monitora andamento fatturazione con proiezione annuale. Alert proattivi multi-soglia:
-- **70k**: "stai andando bene, tieni d'occhio"
-- **80k**: "ti avvicini alla soglia"
-- **84k**: "valuta se rinviare fatture"
-- **85k**: "superata — dal prossimo anno sei in regime ordinario"
-- **95k**: "pericolo — se arrivi a 100k esci subito"
-- **100k**: "CRITICO — uscita immediata con IVA retroattiva"
-
-Verifica cause ostative e esclusioni (partecipazioni, redditi dipendente > 30k, fatturato verso ex datore).
+Monitora fatturazione aggregata multi-ATECO con proiezione annuale. Alert multi-soglia: **70k** (attenzione) → **80k** (avvicinamento) → **84k** (valuta rinvio) → **85k** (uscita anno prossimo) → **95k** (pericolo) → **100k** (uscita immediata + IVA retroattiva). Verifica cause ostative, esclusioni, necessità visto di conformità per crediti > 5.000€.
 
 ### Agent5 — Declaration Generator
-Compila Modello Redditi PF (Quadro LM + Quadro RS), firma digitalmente con credenziali di Agent0, trasmette via intermediario abilitato.
+Compila Modello Redditi PF con Quadro LM multi-ATECO + Quadro RS. Firma tramite Vault, trasmette via intermediario abilitato.
 
 ### Agent6 — Payment Scheduler
-Genera F24 precompilati da template con codici tributo e importi validati. Costruisce scadenzario personalizzato (diverso per gestione separata vs artigiani/commercianti). Gestisce rateizzazione con interessi.
+Genera F24 da template con codici tributo, importi validati e **compensazione crediti d'imposta**. Scadenzario personalizzato per tipo gestione INPS. Include versamento marche da bollo virtuali (codice 2501). Gestisce rateizzazione.
 
 ### Agent7 — Advisor
-Analisi proattiva, simulazione comparativa forfettario vs ordinario vs SRL con numeri concreti, pianificazione fiscale anno successivo, suggerimenti timing fatturazione.
+Analisi proattiva, simulazione forfettario vs ordinario vs SRL, pianificazione fiscale, ottimizzazione mix ATECO.
+
+### Agent8 — Invoicing (Fatturazione Attiva)
+Emette fatture elettroniche XML conformi SDI. Regime fiscale RF19, natura N2.2, dicitura obbligatoria forfettari. Marca da bollo virtuale 2€ su fatture > 77,47€. Numerazione progressiva, note di credito, fatture PA. Monitoraggio esito SDI.
 
 ### Agent9 — Notifier
-SMS + email + push notification 7 giorni prima di ogni scadenza fiscale, con importo esatto.
+SMS + email + push notification 7 giorni prima di ogni scadenza. Recapita alert da tutti gli agenti.
+
+### Vault — Auth Agent
+Custodisce tutte le credenziali in vault dedicato HSM-backed. Gestisce sessioni SPID con 2FA, effettua login come client per gli agenti, policy di accesso per agente, audit trail di ogni accesso.
 
 ---
 
 ## Invio Telematico
 
-L'invio avviene SEMPRE tramite **intermediario abilitato** ex art. 3 DPR 322/98. La firma digitale viene apposta con le credenziali archiviate da Agent0, la trasmissione viene instradata tramite l'intermediario scelto.
+L'invio avviene SEMPRE tramite **intermediario abilitato** ex art. 3 DPR 322/98. La firma digitale viene apposta tramite il Vault, la trasmissione viene instradata tramite l'intermediario.
 
 > L'intermediario specifico è ancora da definire. Candidati in valutazione: Abletech API, TeamSystem API, altri.
+
+---
+
+## Calcolo Imposta — Formula
+
+```
+Per ciascun ATECO_i:
+  reddito_ATECO_i = ricavi_ATECO_i × coefficiente_ATECO_i
+
+Reddito lordo = Σ reddito_ATECO_i
+Reddito imponibile = Reddito lordo − contributi_INPS_versati_anno
+
+Imposta sostitutiva = Reddito imponibile × aliquota (5% o 15%)
+
+Acconti = 100% imposta anno precedente (40% giugno + 60% novembre)
+Saldo = Imposta anno corrente − acconti versati
+  Se negativo → credito compensabile in F24 anno successivo
+```
 
 ---
 
@@ -116,16 +137,18 @@ L'invio avviene SEMPRE tramite **intermediario abilitato** ex art. 3 DPR 322/98.
 
 - **Runtime**: Python 3.12+
 - **Orchestrazione agenti**: Claude Agent SDK / LangGraph
-- **LLM**: Claude (Anthropic API)
-- **Validatore deterministico**: Python puro (Agent3b — zero LLM)
+- **LLM**: Claude (Anthropic API) — solo per comunicazione naturale, NON per calcoli
+- **Calcoli fiscali**: Python puro deterministico (Agent3 + Agent3b)
 - **OCR**: Claude Vision / Tesseract come fallback
 - **Database**: PostgreSQL + pgvector per classificazione semantica
 - **Message queue**: Redis Streams / NATS per comunicazione inter-agente
 - **API Layer**: FastAPI
+- **Vault**: HashiCorp Vault / AWS KMS + HSM
 - **Open Banking**: Tink / Yapily (PSD2)
 - **Fatturazione elettronica**: SDK SDI Agenzia Entrate
-- **Firma digitale**: Aruba Sign API / Namirial / InfoCert (credenziali utente)
+- **Firma digitale**: Aruba Sign API / Namirial / InfoCert (credenziali in Vault)
 - **Invio telematico**: Intermediario abilitato (da definire)
+- **Conservazione sostitutiva**: Servizio gratuito AdE (Fatture e Corrispettivi)
 - **Documenti**: Google Drive API / Google Photos API
 - **Notifiche**: Twilio (SMS) + SendGrid (email) + push notification app
 - **Infra**: Docker + Railway / Fly.io
@@ -139,31 +162,34 @@ L'invio avviene SEMPRE tramite **intermediario abilitato** ex art. 3 DPR 322/98.
 p.IVA/
 ├── README.md
 ├── agents/
-│   ├── supervisor/           # Profilo contribuente & coordinamento
-│   ├── agent0_wizard/        # Onboarding & bootstrap
-│   ├── agent1_collector/     # Raccolta dati
-│   │   └── ocr_subagent/     # OCR scontrini
-│   ├── agent2_categorizer/   # Classificazione
-│   ├── agent3_calculator/    # Calcolo imposte (LLM-assisted)
-│   ├── agent3b_validator/    # Doppio controllo (deterministico)
-│   ├── agent4_compliance/    # Verifica compliance e soglie
-│   ├── agent5_declaration/   # Generazione dichiarazione
-│   ├── agent6_scheduler/     # Scadenzario e F24
-│   ├── agent7_advisor/       # Advisory proattivo
-│   └── agent9_notifier/      # Notifiche
+│   ├── supervisor/              # Profilo contribuente & coordinamento
+│   ├── agent0_wizard/           # Onboarding & bootstrap
+│   ├── agent1_collector/        # Raccolta dati
+│   │   └── ocr_subagent/        # OCR scontrini
+│   ├── agent2_categorizer/      # Classificazione (multi-ATECO)
+│   ├── agent3_calculator/       # Calcolo imposte (deterministico)
+│   ├── agent3b_validator/       # Doppio controllo (deterministico)
+│   ├── agent4_compliance/       # Compliance e soglie multi-livello
+│   ├── agent5_declaration/      # Generazione dichiarazione
+│   ├── agent6_scheduler/        # Scadenzario e F24 + compensazioni
+│   ├── agent7_advisor/          # Advisory proattivo
+│   ├── agent8_invoicing/        # Fatturazione attiva elettronica
+│   └── agent9_notifier/         # Notifiche
 ├── integrations/
-│   ├── agenzia_entrate/      # API Agenzia delle Entrate
-│   ├── open_banking/         # PSD2
-│   ├── sdi/                  # Sistema di Interscambio
-│   ├── firma_digitale/       # Provider firma digitale
-│   ├── inps/                 # Gestione contributiva
-│   ├── cciaa_comunica/       # Camera di Commercio
-│   └── invio_telematico/     # Intermediario abilitato
+│   ├── agenzia_entrate/         # API AdE + conservazione sostitutiva
+│   ├── open_banking/            # PSD2 + gestione consent 90gg
+│   ├── sdi/                     # Sistema di Interscambio
+│   ├── firma_digitale/          # Provider firma digitale
+│   ├── inps/                    # Gestione contributiva
+│   ├── cciaa_comunica/          # Camera di Commercio
+│   ├── invio_telematico/        # Intermediario abilitato
+│   └── vault/                   # Auth Agent + Credential Manager
 ├── shared/
 │   ├── ateco_coefficients.json  # Coefficienti redditività per ATECO
 │   ├── tax_calendar.json        # Scadenze fiscali complete
-│   ├── f24_tax_codes.json       # Codici tributo F24
+│   ├── f24_tax_codes.json       # Codici tributo + causali INPS (separati)
 │   ├── f24_template.json        # Template struttura F24
+│   ├── inps_rates.json          # Aliquote INPS per anno (aggiornamento annuale)
 │   └── models/
 ├── tests/
 └── docs/
@@ -176,13 +202,15 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 ## Roadmap
 
 1. **Agent0 MVP** — Wizard che guida l'apertura P.IVA, stima imposte, spiega il regime
-2. **Supervisor** — Profilo contribuente e storico pluriennale
-3. **Agent1 + Agent2** — Collector e categorizzazione automatica
-4. **Agent3 + Agent3b** — Calcolo LLM-assisted + validazione deterministica
-5. **Agent6 + Agent9** — Scadenziario F24 e notifiche
-6. **Agent5** — Generazione e invio dichiarazione via intermediario
-7. **Agent4 + Agent7** — Compliance multi-soglia e advisory
-8. **App mobile** — Interfaccia utente per scontrini e dashboard
+2. **Vault** — Infrastruttura sicurezza credenziali
+3. **Supervisor** — Profilo contribuente e storico pluriennale
+4. **Agent8** — Fatturazione attiva elettronica
+5. **Agent1 + Agent2** — Collector e categorizzazione multi-ATECO
+6. **Agent3 + Agent3b** — Doppio calcolo deterministico + validazione
+7. **Agent6 + Agent9** — Scadenziario F24 con compensazioni e notifiche
+8. **Agent5** — Generazione e invio dichiarazione via intermediario
+9. **Agent4 + Agent7** — Compliance multi-soglia e advisory
+10. **App mobile** — Interfaccia utente per scontrini e dashboard
 
 ---
 

@@ -7,9 +7,10 @@
 - Pianificazione fiscale per l'anno successivo
 - Suggerire timing fatturazione per ottimizzare il carico fiscale (es. rinviare fatture a gennaio)
 - Simulazioni what-if su scenari di fatturato
+- **Multi-ATECO**: analizzare se conviene spostare attività tra ATECO diversi per ottimizzare il mix coefficienti
 
 ## Input
-- Dati ricavi e trend da Agent2
+- Dati ricavi e trend da Agent2 (per ATECO e aggregati)
 - Alert da Agent4 in caso di rischio uscita dal regime
 - Storico fiscale pluriennale dal Supervisor
 - Proiezione fatturato da Agent4

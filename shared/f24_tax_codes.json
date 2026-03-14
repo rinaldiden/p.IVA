@@ -1,92 +1,125 @@
 {
-  "_description": "Codici tributo F24 per contribuenti forfettari",
+  "_description": "Codici tributo e causali contributo F24 per contribuenti forfettari",
   "_source": "Agenzia delle Entrate - Risoluzione codici tributo",
 
-  "imposta_sostitutiva": {
-    "1790": {
-      "description": "Imposta sostitutiva regime forfettario - ACCONTO PRIMA RATA",
-      "sezione": "erario",
-      "rateizzabile": true
+  "sezione_erario": {
+    "_description": "Codici tributo per la sezione Erario del modello F24",
+
+    "imposta_sostitutiva": {
+      "1790": {
+        "description": "Imposta sostitutiva regime forfettario - ACCONTO PRIMA RATA",
+        "rateizzabile": true,
+        "scadenza": "06-30"
+      },
+      "1791": {
+        "description": "Imposta sostitutiva regime forfettario - ACCONTO SECONDA RATA o unica soluzione",
+        "rateizzabile": false,
+        "scadenza": "11-30"
+      },
+      "1792": {
+        "description": "Imposta sostitutiva regime forfettario - SALDO",
+        "rateizzabile": true,
+        "scadenza": "06-30"
+      }
     },
-    "1791": {
-      "description": "Imposta sostitutiva regime forfettario - ACCONTO SECONDA RATA o unica soluzione",
-      "sezione": "erario",
-      "rateizzabile": false
+
+    "marca_da_bollo": {
+      "2501": {
+        "description": "Imposta di bollo sulle fatture elettroniche - versamento annuale",
+        "scadenza": "01-30",
+        "note": "Versamento cumulativo marche da bollo virtuali anno precedente. Se importo < 5.000€ il versamento è annuale, altrimenti trimestrale"
+      }
     },
-    "1792": {
-      "description": "Imposta sostitutiva regime forfettario - SALDO",
-      "sezione": "erario",
-      "rateizzabile": true
+
+    "interessi_rateizzazione": {
+      "1668": {
+        "description": "Interessi pagamento dilazionato imposte erariali"
+      }
+    },
+
+    "ravvedimento_operoso": {
+      "8913": {
+        "description": "Sanzione pecuniaria imposte sostitutive - ravvedimento"
+      },
+      "1992": {
+        "description": "Interessi sul ravvedimento - imposte sostitutive"
+      }
     }
   },
 
-  "inps_gestione_separata": {
-    "PXX": {
-      "description": "Contributi INPS gestione separata - ACCONTO",
-      "sezione": "inps",
-      "note": "Il codice esatto varia, consultare cassetto previdenziale"
+  "sezione_inps": {
+    "_description": "Causali contributo per la sezione INPS del modello F24. ATTENZIONE: in questa sezione si usano CAUSALI CONTRIBUTO, non codici tributo. Vanno compilati insieme a codice sede e matricola INPS.",
+
+    "gestione_separata": {
+      "causali": {
+        "PXX": {
+          "description": "Parasubordinati - iscritti alla gestione separata",
+          "note": "Causale generica. Il codice specifico va verificato sul cassetto previdenziale INPS dell'utente"
+        }
+      },
+      "campi_obbligatori": {
+        "codice_sede": "Codice della sede INPS competente",
+        "causale_contributo": "PXX o codice specifico da cassetto previdenziale",
+        "matricola": "Codice INPS del contribuente",
+        "periodo_da": "MM/AAAA inizio periodo",
+        "periodo_a": "MM/AAAA fine periodo"
+      }
     },
-    "P10": {
-      "description": "Contributi INPS gestione separata - SALDO",
-      "sezione": "inps"
+
+    "artigiani": {
+      "causali": {
+        "AF": {
+          "description": "Artigiani - contributi fissi trimestrali",
+          "scadenze": ["02-16", "05-16", "08-20", "11-16"]
+        },
+        "AP": {
+          "description": "Artigiani - contributi eccedente il minimale acconto"
+        },
+        "APR": {
+          "description": "Artigiani - contributi eccedente il minimale saldo"
+        }
+      },
+      "campi_obbligatori": {
+        "codice_sede": "Codice della sede INPS competente",
+        "causale_contributo": "AF / AP / APR",
+        "matricola": "Codice INPS azienda artigiana",
+        "periodo_da": "MM/AAAA inizio periodo",
+        "periodo_a": "MM/AAAA fine periodo"
+      }
+    },
+
+    "commercianti": {
+      "causali": {
+        "CF": {
+          "description": "Commercianti - contributi fissi trimestrali",
+          "scadenze": ["02-16", "05-16", "08-20", "11-16"]
+        },
+        "CP": {
+          "description": "Commercianti - contributi eccedente il minimale acconto"
+        },
+        "CPR": {
+          "description": "Commercianti - contributi eccedente il minimale saldo"
+        }
+      },
+      "campi_obbligatori": {
+        "codice_sede": "Codice della sede INPS competente",
+        "causale_contributo": "CF / CP / CPR",
+        "matricola": "Codice INPS azienda commerciale",
+        "periodo_da": "MM/AAAA inizio periodo",
+        "periodo_a": "MM/AAAA fine periodo"
+      }
     }
   },
 
-  "inps_artigiani": {
-    "AF": {
-      "description": "Contributi fissi artigiani - rata trimestrale",
-      "sezione": "inps",
-      "scadenze": ["02-16", "05-16", "08-20", "11-16"]
-    },
-    "AP": {
-      "description": "Contributi artigiani eccedente il minimale - ACCONTO",
-      "sezione": "inps"
-    },
-    "APR": {
-      "description": "Contributi artigiani eccedente il minimale - SALDO",
-      "sezione": "inps"
-    }
-  },
+  "sezione_regioni_enti_locali": {
+    "_description": "Codici tributo per la sezione Regioni/Enti Locali del modello F24",
 
-  "inps_commercianti": {
-    "CF": {
-      "description": "Contributi fissi commercianti - rata trimestrale",
-      "sezione": "inps",
-      "scadenze": ["02-16", "05-16", "08-20", "11-16"]
-    },
-    "CP": {
-      "description": "Contributi commercianti eccedente il minimale - ACCONTO",
-      "sezione": "inps"
-    },
-    "CPR": {
-      "description": "Contributi commercianti eccedente il minimale - SALDO",
-      "sezione": "inps"
-    }
-  },
-
-  "diritto_camerale": {
-    "3850": {
-      "description": "Diritto annuale Camera di Commercio",
-      "sezione": "regioni_enti_locali",
-      "scadenza": "06-30"
-    }
-  },
-
-  "interessi_rateizzazione": {
-    "1668": {
-      "description": "Interessi pagamento dilazionato imposte erariali",
-      "sezione": "erario"
-    }
-  },
-
-  "ravvedimento_operoso": {
-    "8913": {
-      "description": "Sanzione pecuniaria imposte sostitutive - ravvedimento",
-      "sezione": "erario"
-    },
-    "1992": {
-      "description": "Interessi sul ravvedimento - imposte sostitutive",
-      "sezione": "erario"
+    "diritto_camerale": {
+      "3850": {
+        "description": "Diritto annuale Camera di Commercio",
+        "scadenza": "06-30",
+        "note": "Solo per iscritti CCIAA. Codice ente = sigla provincia della CCIAA"
+      }
     }
   }
 }
