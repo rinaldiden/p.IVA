@@ -21,6 +21,21 @@ from .updater import apply_update, write_review_queue
 logger = logging.getLogger(__name__)
 
 
+def _publish_event(event_type: str, payload: dict) -> None:
+    """Publish Agent10 events to the messaging bus (best-effort)."""
+    try:
+        from shared.messaging.publisher import AgentPublisher
+        pub = AgentPublisher(agent_id="agent10_normative")
+        pub.publish(
+            event_type=event_type,
+            contribuente_id="system",
+            payload=payload,
+        )
+        pub.close()
+    except Exception as e:
+        logger.debug("Could not publish event to Redis: %s", e)
+
+
 class NormativeWatcher:
     """Main orchestrator for normative monitoring.
 
@@ -169,11 +184,21 @@ class NormativeWatcher:
             # Already effective — apply now
             logger.info("Applying immediately: %s", update.documento_titolo)
             apply_update(update)
+            _publish_event("normative_applied", {
+                "update_id": update.update_id,
+                "documento": update.documento_titolo,
+                "parametri": [c.nome_parametro for c in update.parametri_modificati],
+            })
         else:
             # Future — schedule
             update.stato = "scheduled"
             update.data_applicazione = earliest
             self._scheduler.schedule(update)
+            _publish_event("normative_scheduled", {
+                "update_id": update.update_id,
+                "documento": update.documento_titolo,
+                "data_efficacia": earliest.isoformat(),
+            })
             logger.info(
                 "Scheduled for %s: %s",
                 earliest.isoformat(),

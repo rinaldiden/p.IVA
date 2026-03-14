@@ -59,6 +59,11 @@ class EventType:
     # Agent9
     NOTIFICATION_SENT = "notification_sent"
 
+    # Agent10
+    NORMATIVE_APPLIED = "normative_applied"
+    NORMATIVE_SCHEDULED = "normative_scheduled"
+    NORMATIVE_REVIEW_NEEDED = "normative_review_needed"
+
     # Vault
     CREDENTIAL_EXPIRING = "credential_expiring"
     CREDENTIAL_ROTATED = "credential_rotated"
@@ -82,6 +87,7 @@ AGENT_STREAMS = {
     "agent6_scheduler": "fiscalai:agent6:events",
     "agent8_invoicing": "fiscalai:agent8:events",
     "agent9_notifier": "fiscalai:agent9:events",
+    "agent10_normative": "fiscalai:agent10:events",
     "vault": "fiscalai:vault:events",
     "supervisor": "fiscalai:supervisor:events",
 }

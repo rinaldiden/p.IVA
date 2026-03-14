@@ -48,9 +48,11 @@ class SupervisorListener:
 
     def __init__(
         self,
-        redis_url: str = "redis://localhost:6379/0",
+        redis_url: str | None = None,
         state_store: ContribuenteStateStore | None = None,
     ) -> None:
+        import os
+        redis_url = redis_url or os.environ.get("REDIS_URL", "redis://localhost:6379/0")
         self._redis_url = redis_url
         self._state = state_store or ContribuenteStateStore()
 

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import redis
 
 from .models import AgentEvent, stream_for_agent
+
+_DEFAULT_REDIS_URL = "redis://localhost:6379/0"
 
 
 class AgentPublisher:
@@ -15,8 +18,9 @@ class AgentPublisher:
     def __init__(
         self,
         agent_id: str,
-        redis_url: str = "redis://localhost:6379/0",
+        redis_url: str | None = None,
     ) -> None:
+        redis_url = redis_url or os.environ.get("REDIS_URL", _DEFAULT_REDIS_URL)
         self._agent_id = agent_id
         self._stream = stream_for_agent(agent_id)
         self._redis = redis.Redis.from_url(redis_url, decode_responses=True)

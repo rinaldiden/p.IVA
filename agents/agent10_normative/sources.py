@@ -5,8 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import xml.etree.ElementTree as ET
 from datetime import date, datetime
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -79,8 +81,8 @@ def fetch_gazzetta_ufficiale(http_client: Any = None) -> list[SourceResult]:
 
 
 def fetch_agenzia_entrate(http_client: Any = None) -> list[SourceResult]:
-    """Fetch from Agenzia delle Entrate normativa e prassi."""
-    url = "https://www.agenziaentrate.gov.it/portale/normativa-e-prassi"
+    """Fetch from Agenzia delle Entrate RSS feed."""
+    url = "https://www.agenziaentrate.gov.it/portale/documents/rss"
 
     if http_client is None:
         try:
@@ -94,13 +96,16 @@ def fetch_agenzia_entrate(http_client: Any = None) -> list[SourceResult]:
     else:
         content = http_client(url)
 
-    # For now, treat as potential RSS or HTML — extract items
-    return _parse_rss(content, fonte="agenzia_entrate")
+    # Try RSS first, fall back to HTML link extraction
+    results = _parse_rss(content, fonte="agenzia_entrate")
+    if not results:
+        results = _parse_html_links(content, fonte="agenzia_entrate")
+    return results
 
 
 def fetch_inps_circolari(http_client: Any = None) -> list[SourceResult]:
-    """Fetch INPS circulars."""
-    url = "https://www.inps.it/circolari"
+    """Fetch INPS circulars RSS feed."""
+    url = "https://servizi2.inps.it/servizi/CircMessworker/RSSfeed.aspx"
 
     if http_client is None:
         try:
@@ -114,12 +119,15 @@ def fetch_inps_circolari(http_client: Any = None) -> list[SourceResult]:
     else:
         content = http_client(url)
 
-    return _parse_rss(content, fonte="inps")
+    results = _parse_rss(content, fonte="inps")
+    if not results:
+        results = _parse_html_links(content, fonte="inps")
+    return results
 
 
 def fetch_normattiva(http_client: Any = None) -> list[SourceResult]:
-    """Fetch from Normattiva (consolidated law texts)."""
-    url = "https://www.normattiva.it"
+    """Fetch from Normattiva recent updates."""
+    url = "https://www.normattiva.it/ultime-visite"
 
     if http_client is None:
         try:
@@ -133,7 +141,10 @@ def fetch_normattiva(http_client: Any = None) -> list[SourceResult]:
     else:
         content = http_client(url)
 
-    return _parse_rss(content, fonte="normattiva")
+    results = _parse_rss(content, fonte="normattiva")
+    if not results:
+        results = _parse_html_links(content, fonte="normattiva")
+    return results
 
 
 def _parse_rss(content: str, fonte: str) -> list[SourceResult]:
@@ -180,6 +191,46 @@ def _parse_rss(content: str, fonte: str) -> list[SourceResult]:
             url=link,
             testo=combined_text,
             data_pubblicazione=pub_date,
+            hash_documento=doc_hash,
+        ))
+
+    return results
+
+
+def _parse_html_links(content: str, fonte: str) -> list[SourceResult]:
+    """Extract links from HTML pages when RSS is not available.
+
+    Falls back to <a> tag extraction with keyword filtering.
+    """
+    results: list[SourceResult] = []
+
+    # Simple regex extraction of links with text
+    pattern = re.compile(
+        r'<a\s+[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+        re.IGNORECASE | re.DOTALL,
+    )
+
+    for match in pattern.finditer(content):
+        url = match.group(1)
+        # Strip HTML tags from link text
+        title = re.sub(r"<[^>]+>", "", match.group(2)).strip()
+
+        if not title or len(title) < 10:
+            continue
+
+        if not _matches_keywords(title):
+            continue
+
+        doc_hash = _hash_text(title)
+        if _already_processed(doc_hash):
+            continue
+
+        results.append(SourceResult(
+            fonte=fonte,
+            titolo=title,
+            url=url,
+            testo=title,
+            data_pubblicazione=date.today(),
             hash_documento=doc_hash,
         ))
 

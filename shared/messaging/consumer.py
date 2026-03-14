@@ -23,10 +23,12 @@ class AgentConsumer:
     def __init__(
         self,
         agent_id: str,
-        redis_url: str = "redis://localhost:6379/0",
+        redis_url: str | None = None,
         streams_to_listen: list[str] | None = None,
         consumer_name: str | None = None,
     ) -> None:
+        import os
+        redis_url = redis_url or os.environ.get("REDIS_URL", "redis://localhost:6379/0")
         self._agent_id = agent_id
         self._consumer_name = consumer_name or f"{agent_id}-1"
         self._redis = redis.Redis.from_url(redis_url, decode_responses=True)

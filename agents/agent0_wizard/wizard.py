@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+from dataclasses import asdict
 from decimal import Decimal
 from typing import Any
 
@@ -10,14 +12,25 @@ from .onboarding import OnboardingWizard
 from .redis_publisher import Agent0RedisPublisher
 from .simulator import simulate
 
+logger = logging.getLogger(__name__)
+
 
 def run_onboarding(
     use_claude: bool = True,
     publish_redis: bool = True,
 ) -> ProfiloContribuente:
-    """Run the full onboarding wizard and publish result to Redis."""
+    """Run the full onboarding wizard, persist profile, and publish to Redis."""
     wizard = OnboardingWizard(use_claude=use_claude)
     profilo = wizard.run()
+
+    # Persist to Supervisor store (survives restarts)
+    try:
+        from agents.supervisor.persistence import SupervisorStore
+        store = SupervisorStore()
+        store.save_from_agent0(asdict(profilo))
+        logger.info("Profile persisted to Supervisor store: %s", profilo.contribuente_id)
+    except Exception as e:
+        logger.warning("Failed to persist profile to Supervisor: %s", e)
 
     if publish_redis:
         publisher = Agent0RedisPublisher()

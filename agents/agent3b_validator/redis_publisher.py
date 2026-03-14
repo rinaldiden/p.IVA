@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -11,6 +12,7 @@ from typing import Any
 import redis
 
 STREAM = "fiscalai:agent3b:events"
+_DEFAULT_REDIS_URL = "redis://localhost:6379/0"
 
 
 class _DecimalEncoder(json.JSONEncoder):
@@ -23,8 +25,9 @@ class _DecimalEncoder(json.JSONEncoder):
 class Agent3bRedisPublisher:
     """Publishes validation results to Redis Streams."""
 
-    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0) -> None:
-        self._redis = redis.Redis(host=host, port=port, db=db, decode_responses=True)
+    def __init__(self, redis_url: str | None = None) -> None:
+        url = redis_url or os.environ.get("REDIS_URL", _DEFAULT_REDIS_URL)
+        self._redis = redis.Redis.from_url(url, decode_responses=True)
 
     def publish_validation_result(
         self,

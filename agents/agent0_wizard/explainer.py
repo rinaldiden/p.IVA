@@ -38,14 +38,22 @@ def _get_client():
 
 
 def _call_claude(prompt: str) -> str:
-    client = _get_client()
-    message = client.messages.create(
-        model=MODEL,
-        max_tokens=MAX_TOKENS,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return message.content[0].text
+    try:
+        client = _get_client()
+        message = client.messages.create(
+            model=MODEL,
+            max_tokens=MAX_TOKENS,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return message.content[0].text
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Claude API call failed: %s", e)
+        return (
+            "[Spiegazione non disponibile — API Claude non raggiungibile. "
+            "I calcoli fiscali sono comunque validi e corretti.]"
+        )
 
 
 def _load_ateco_catalog() -> dict[str, Any]:
