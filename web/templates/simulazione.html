@@ -1,16 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Simulazione — FiscalAI{% endblock %}
+{% block nav_right %}
+<div class="nav-links">
+    <a href="/dashboard/{{ pid }}">Dashboard</a>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Simulazione fiscale</h1>
-    <p>{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }} — {{ ana.get('ateco_principale', '') }}</p>
+<div style="padding-top:32px;">
+    <h1 style="font-size:24px;font-weight:700;margin-bottom:4px;">Simulazione fiscale</h1>
+    <p style="color:var(--text2);">{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }} — {{ ana.get('ateco_principale', '') }}</p>
 </div>
 
-<form method="POST">
+<form method="POST" style="margin-top:24px;">
     <div class="card">
-        <h2>Inserisci ricavi</h2>
-        <div class="grid grid-2">
+        <h2>Inserisci i tuoi ricavi</h2>
+        <div class="form-row form-row-2">
             <div class="form-group">
                 <label>Anno fiscale</label>
                 <select name="anno">
@@ -19,7 +24,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Ricavi ATECO {{ ana.get('ateco_principale', '') }} (EUR)</label>
+                <label>Ricavi {{ ana.get('ateco_principale', '') }} (&euro;)</label>
                 <input type="number" name="ricavi_principale" step="0.01" min="0"
                        value="{{ ricavi_input.get(ana.get('ateco_principale', ''), '') }}"
                        placeholder="50000" required>
@@ -27,10 +32,9 @@
         </div>
         {% for sec in ana.get('ateco_secondari', []) %}
         <div class="form-group">
-            <label>Ricavi ATECO {{ sec }} (EUR)</label>
+            <label>Ricavi {{ sec }} (&euro;)</label>
             <input type="number" name="ricavi_{{ sec }}" step="0.01" min="0"
-                   value="{{ ricavi_input.get(sec, '') }}"
-                   placeholder="0">
+                   value="{{ ricavi_input.get(sec, '') }}" placeholder="0">
         </div>
         {% endfor %}
         <button type="submit" class="btn btn-primary">Calcola</button>
@@ -39,102 +43,88 @@
 
 {% if sim %}
 <!-- VALIDATION -->
-<div class="card">
-    <h2>Validazione Agent3b</h2>
+<div style="margin-top:16px;">
     {% if not validation.blocco %}
-        <div class="validation-pass">
-            VALIDAZIONE SUPERATA — Agent3 e Agent3b concordano (0 divergenze). Checksum: {{ sim.checksum[:24] }}...
-        </div>
+    <div class="validation-pass">
+        &#10003; Validazione superata — Agent3 e Agent3b concordano (0 divergenze). Checksum: {{ sim.checksum[:24] }}...
+    </div>
     {% else %}
-        <div class="validation-fail">
-            BLOCCO — Divergenza rilevata tra Agent3 e Agent3b.<br>
-            {% for d in validation.divergenze %}
-                {{ d }}<br>
-            {% endfor %}
-        </div>
+    <div class="validation-fail">
+        &#10007; Blocco — Divergenza rilevata tra Agent3 e Agent3b.
+        {% for d in validation.divergenze %}<br>{{ d }}{% endfor %}
+    </div>
     {% endif %}
 </div>
 
-<!-- RESULTS -->
-<div class="grid grid-3">
+<!-- STATS -->
+<div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin:16px 0;">
     <div class="stat">
-        <div class="value" style="color: var(--text);">{{ "{:,.2f}".format(sim.ricavi_totali) }}</div>
-        <div class="label">Ricavi (EUR)</div>
+        <div class="stat-value">{{ "{:,.0f}".format(sim.ricavi_totali) }} &euro;</div>
+        <div class="stat-label">Ricavi</div>
     </div>
     <div class="stat">
-        <div class="value" style="color: var(--text);">{{ "{:,.2f}".format(sim.reddito_imponibile) }}</div>
-        <div class="label">Reddito imponibile</div>
+        <div class="stat-value">{{ "{:,.0f}".format(sim.reddito_imponibile) }} &euro;</div>
+        <div class="stat-label">Reddito imponibile</div>
     </div>
     <div class="stat">
-        <div class="value" style="color: var(--accent2);">{{ (sim.aliquota * 100)|int }}%</div>
-        <div class="label">Aliquota</div>
+        <div class="stat-value" style="color:var(--primary);">{{ (sim.aliquota * 100)|int }}%</div>
+        <div class="stat-label">Aliquota</div>
     </div>
 </div>
 
-<br>
-
+<!-- DETAIL -->
 <div class="card">
     <h2>Dettaglio calcolo</h2>
     <table>
-        <tr><td style="color: var(--text2);">Ricavi totali</td><td class="text-right text-mono">{{ "{:,.2f}".format(sim.ricavi_totali) }} EUR</td></tr>
-        <tr><td style="color: var(--text2);">Reddito lordo</td><td class="text-right text-mono">{{ "{:,.2f}".format(sim.reddito_lordo) }} EUR</td></tr>
-        <tr><td style="color: var(--text2);">Reddito imponibile (dopo INPS)</td><td class="text-right text-mono">{{ "{:,.2f}".format(sim.reddito_imponibile) }} EUR</td></tr>
-        <tr><td style="color: var(--text2);">Imposta sostitutiva</td><td class="text-right text-mono" style="color: var(--red);">{{ "{:,.2f}".format(sim.imposta_sostitutiva) }} EUR</td></tr>
-        <tr><td style="color: var(--text2);">Contributo INPS</td><td class="text-right text-mono" style="color: var(--red);">{{ "{:,.2f}".format(sim.contributo_inps) }} EUR</td></tr>
-        <tr style="border-top: 2px solid var(--border);"><td style="font-weight: 600;">TOTALE da versare</td><td class="text-right text-mono" style="font-weight: 700; font-size: 16px;">{{ "{:,.2f}".format(sim.imposta_sostitutiva + sim.contributo_inps) }} EUR</td></tr>
-        <tr><td style="color: var(--text2);">Rata mensile da accantonare</td><td class="text-right text-mono" style="color: var(--yellow);">{{ "{:,.2f}".format(sim.rata_mensile_da_accantonare) }} EUR/mese</td></tr>
+        <tr><td style="color:var(--text2);">Ricavi totali</td><td class="text-right text-mono">{{ "{:,.2f}".format(sim.ricavi_totali) }} &euro;</td></tr>
+        <tr><td style="color:var(--text2);">Reddito lordo</td><td class="text-right text-mono">{{ "{:,.2f}".format(sim.reddito_lordo) }} &euro;</td></tr>
+        <tr><td style="color:var(--text2);">Reddito imponibile</td><td class="text-right text-mono">{{ "{:,.2f}".format(sim.reddito_imponibile) }} &euro;</td></tr>
+        <tr><td style="color:var(--text2);">Imposta sostitutiva</td><td class="text-right text-mono" style="color:var(--error);">{{ "{:,.2f}".format(sim.imposta_sostitutiva) }} &euro;</td></tr>
+        <tr><td style="color:var(--text2);">Contributo INPS</td><td class="text-right text-mono" style="color:var(--error);">{{ "{:,.2f}".format(sim.contributo_inps) }} &euro;</td></tr>
+        <tr style="border-top:2px solid var(--border);"><td style="font-weight:700;">Totale da versare</td><td class="text-right text-mono" style="font-weight:700;font-size:17px;">{{ "{:,.2f}".format(sim.imposta_sostitutiva + sim.contributo_inps) }} &euro;</td></tr>
+        <tr><td style="color:var(--text2);">Da mettere da parte ogni mese</td><td class="text-right text-mono" style="color:var(--warning);">{{ "{:,.2f}".format(sim.rata_mensile_da_accantonare) }} &euro;/mese</td></tr>
     </table>
 </div>
 
-<!-- CONFRONTO REGIMI -->
+<!-- CONFRONTO -->
 <div class="card">
     <h2>Confronto regimi</h2>
-    <div class="grid grid-3">
-        <div class="stat">
-            <div class="value" style="color: var(--green);">{{ "{:,.2f}".format(sim.confronto_regimi.forfettario.totale|float) }}</div>
-            <div class="label">Forfettario (EUR)</div>
+    <div class="stats" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="stat" style="background:var(--success-light);">
+            <div class="stat-value" style="color:var(--success);">{{ "{:,.0f}".format(sim.confronto_regimi.forfettario.totale|float) }} &euro;</div>
+            <div class="stat-label">Forfettario</div>
+        </div>
+        <div class="stat" style="background:var(--error-light);">
+            <div class="stat-value" style="color:var(--error);">{{ "{:,.0f}".format(sim.confronto_regimi.ordinario_stimato.totale|float) }} &euro;</div>
+            <div class="stat-label">Ordinario IRPEF</div>
         </div>
         <div class="stat">
-            <div class="value" style="color: var(--red);">{{ "{:,.2f}".format(sim.confronto_regimi.ordinario_stimato.totale|float) }}</div>
-            <div class="label">Ordinario IRPEF (EUR)</div>
-        </div>
-        <div class="stat">
-            <div class="value" style="color: var(--green);">{{ "{:,.2f}".format(sim.risparmio_vs_ordinario) }}</div>
-            <div class="label">Risparmio (EUR)</div>
+            <div class="stat-value" style="color:var(--success);">{{ "{:,.0f}".format(sim.risparmio_vs_ordinario) }} &euro;</div>
+            <div class="stat-label">Risparmio</div>
         </div>
     </div>
 </div>
 
 {% if sim.warnings %}
-<div class="card" style="border-color: var(--yellow);">
-    <h2 style="color: var(--yellow);">Attenzione</h2>
-    {% for w in sim.warnings %}
-    <p>{{ w }}</p>
-    {% endfor %}
+<div class="info-box yellow">
+    {% for w in sim.warnings %}<p>{{ w }}</p>{% endfor %}
 </div>
 {% endif %}
 
 <!-- PIANO F24 -->
 {% if piano %}
 <div class="card">
-    <h2>Piano pagamenti F24 (Agent6)</h2>
-    <p style="color: var(--text2); margin-bottom: 12px;">Totale annuo: <strong style="color: var(--text);">{{ "{:,.2f}".format(piano.totale_annuo) }} EUR</strong></p>
+    <h2>Piano pagamenti F24</h2>
+    <p style="color:var(--text2);margin-bottom:12px;">Totale annuo: <strong style="color:var(--text);">{{ "{:,.2f}".format(piano.totale_annuo) }} &euro;</strong></p>
     <table>
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Codice</th>
-                <th>Descrizione</th>
-                <th class="text-right">Importo</th>
-            </tr>
-        </thead>
+        <thead><tr><th>Data</th><th>Codice</th><th>Descrizione</th><th class="text-right">Importo</th></tr></thead>
         <tbody>
             {% for s in piano.scadenze %}
             <tr>
                 <td class="text-mono">{{ s.data }}</td>
                 <td><span class="badge badge-blue">{{ s.codice_tributo or s.causale }}</span></td>
                 <td>{{ s.descrizione }}</td>
-                <td class="text-right text-mono">{{ "{:,.2f}".format(s.importo) }} EUR</td>
+                <td class="text-right text-mono">{{ "{:,.2f}".format(s.importo) }} &euro;</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -144,8 +134,8 @@
 
 {% endif %}
 
-<div style="padding: 16px 0;">
-    <a href="/profilo/{{ pid }}" class="btn btn-secondary">Torna al profilo</a>
-    <a href="/fattura/{{ pid }}" class="btn btn-secondary">Emetti fattura</a>
+<div style="padding:16px 0;display:flex;gap:8px;">
+    <a href="/dashboard/{{ pid }}" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
+    <a href="/fattura/{{ pid }}" class="btn btn-secondary btn-sm">Emetti fattura</a>
 </div>
 {% endblock %}

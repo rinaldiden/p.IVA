@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}FiscalAI — Apri la tua P.IVA{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Basta pagare<br>il commercialista.</h1>
+    <p class="subtitle">
+        Apri la tua P.IVA in 10 minuti e gestisci<br>
+        tutto da solo. 10&euro; al mese, zero sorprese.
+    </p>
+    <a href="/wizard" class="btn btn-primary btn-lg">Inizia gratis &rarr;</a>
+
+    <ul class="checklist">
+        <li><span class="check">&#10003;</span> Nessuna competenza fiscale richiesta</li>
+        <li><span class="check">&#10003;</span> P.IVA aperta in automatico</li>
+        <li><span class="check">&#10003;</span> Calcoli sempre aggiornati alla normativa vigente</li>
+    </ul>
+</div>
+
+{% if profiles %}
+<div style="border-top:1px solid var(--border);padding-top:32px;margin-top:16px;">
+    <h2 style="font-size:18px;margin-bottom:16px;">Le tue P.IVA</h2>
+    {% for p in profiles %}
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <strong>{{ p.nome }}</strong>
+            <span style="color:var(--text2);font-size:14px;">&middot; {{ p.ateco }} &middot; {{ p.gestione }}</span>
+        </div>
+        <a href="/dashboard/{{ p.id }}" class="btn btn-secondary btn-sm">Apri &rarr;</a>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

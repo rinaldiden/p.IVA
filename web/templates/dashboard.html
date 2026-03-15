@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — FiscalAI{% endblock %}
+{% block nav_width %}container-wide{% endblock %}
+{% block nav_right %}
+<div class="nav-links">
+    <span class="nav-user">{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }}</span>
+    <a href="/">Cambia profilo</a>
+</div>
+{% endblock %}
+
+{% block body %}
+<div class="container-wide">
+    {% if welcome %}
+    <div class="welcome-box">
+        <h2>La tua P.IVA è aperta!</h2>
+        <p>Da oggi puoi concentrarti su quello che sai fare.</p>
+    </div>
+    {% endif %}
+
+    <div style="padding-top:{% if welcome %}0{% else %}24{% endif %}px;">
+        <h1 style="font-size:24px;font-weight:700;margin-bottom:24px;">Dashboard</h1>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats stats-4">
+        <div class="stat">
+            <div class="stat-value">{{ "{:,.0f}".format(fatturato_anno) }} &euro;</div>
+            <div class="stat-label">Fatturato {{ anno }}</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">{{ "{:,.0f}".format(da_accantonare_mese) }} &euro;</div>
+            <div class="stat-label">Da accantonare / mese</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">{% if prossima_scadenza %}{{ prossima_scadenza.data }}{% else %}Nessuna{% endif %}</div>
+            <div class="stat-label">Prossima scadenza</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">{{ n_fatture }}</div>
+            <div class="stat-label">Fatture emesse</div>
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="action-grid">
+        <a href="/fattura/{{ pid }}" class="btn-icon">
+            <span class="emoji">&#x1F4C4;</span>
+            Emetti fattura
+        </a>
+        <a href="/simulazione/{{ pid }}" class="btn-icon">
+            <span class="emoji">&#x1F4CA;</span>
+            Simulazione fiscale
+        </a>
+        <a href="/profilo/{{ pid }}" class="btn-icon">
+            <span class="emoji">&#x2699;</span>
+            Il tuo profilo
+        </a>
+    </div>
+
+    <!-- FATTURE -->
+    <div class="card" style="margin-top:8px;">
+        <h2>Ultime fatture</h2>
+        {% if fatture %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th class="text-right">Importo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in fatture %}
+                <tr>
+                    <td><strong>{{ f.numero }}</strong></td>
+                    <td>{{ f.data }}</td>
+                    <td>{{ f.cliente }}</td>
+                    <td class="text-right text-mono">{{ f.importo }} &euro;</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <h3>Nessuna fattura ancora</h3>
+            <p>Emetti la tua prima fattura per iniziare a tracciare il fatturato.</p>
+            <br>
+            <a href="/fattura/{{ pid }}" class="btn btn-primary btn-sm">Emetti fattura &rarr;</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- SCADENZE -->
+    {% if scadenze %}
+    <div class="card">
+        <h2>Prossime scadenze</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrizione</th>
+                    <th class="text-right">Importo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in scadenze %}
+                <tr>
+                    <td class="text-mono">{{ s.data }}</td>
+                    <td>{{ s.descrizione }}</td>
+                    <td class="text-right text-mono">{{ "{:,.2f}".format(s.importo) }} &euro;</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

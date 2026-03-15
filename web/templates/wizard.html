@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Apri P.IVA — FiscalAI{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <!-- HEADER -->
+    <div class="wizard-header">
+        <div class="wizard-progress">
+            <button class="back hidden">&larr; Indietro</button>
+            <span class="step-text">Step 1 di 7</span>
+        </div>
+        <div class="progress-bar"><div class="fill" style="width:14.3%"></div></div>
+    </div>
+
+    <!-- Hidden form for final submit -->
+    <form id="wizard-form" method="POST" action="/wizard/salva">
+        <input type="hidden" id="h-nome" name="nome">
+        <input type="hidden" id="h-cognome" name="cognome">
+        <input type="hidden" id="h-cf" name="codice_fiscale">
+        <input type="hidden" id="h-ateco" name="ateco_principale">
+        <input type="hidden" id="h-primo-anno" name="primo_anno">
+        <input type="hidden" id="h-ricavi" name="ricavi">
+        <input type="hidden" id="h-gestione" name="gestione_inps">
+        <input type="hidden" id="h-rivalsa" name="rivalsa_inps_4">
+    </form>
+
+    <!-- ═══ STEP 1 — Chi sei ═══ -->
+    <div class="step" data-step="1">
+        <h2>Prima di tutto, chi sei?</h2>
+        <p class="step-subtitle"></p>
+
+        <div class="form-row form-row-2">
+            <div class="form-group">
+                <label for="w-nome">Nome</label>
+                <input type="text" id="w-nome" placeholder="Maria" required>
+            </div>
+            <div class="form-group">
+                <label for="w-cognome">Cognome</label>
+                <input type="text" id="w-cognome" placeholder="Rossi" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="w-cf">Codice fiscale</label>
+            <input type="text" id="w-cf" placeholder="RSSMRA80A01H501U" maxlength="16"
+                   style="text-transform:uppercase;" autocomplete="off">
+            <div id="cf-hint"><span class="hint">Lo trovi sulla tessera sanitaria</span></div>
+        </div>
+    </div>
+
+    <!-- ═══ STEP 2 — Cosa fai ═══ -->
+    <div class="step" data-step="2">
+        <h2>Cosa fai di lavoro?</h2>
+        <p class="step-subtitle">Scrivilo con parole tue — non serve sapere niente di codici o categorie</p>
+
+        <div class="form-group">
+            <textarea id="w-attivita" rows="3"
+                placeholder="es. faccio siti web per aziende, sono fotografo freelance, do ripetizioni di matematica, vendo prodotti online..."></textarea>
+        </div>
+
+        <div id="ateco-suggestions"></div>
+
+        <p style="margin-top:16px;">
+            <a href="javascript:void(0)" onclick="window._showAllAteco()">Non trovo la mia attivita &rarr;</a>
+        </p>
+    </div>
+
+    <!-- ═══ STEP 3 — Primo anno ═══ -->
+    <div class="step" data-step="3">
+        <h2>È la prima volta che apri una P.IVA?</h2>
+        <p class="step-subtitle"></p>
+
+        <div class="choices choices-2" id="step3-choices">
+            <div class="choice" onclick="window._setPrimoAnno(true, this)">
+                <div class="choice-emoji">&#10003;</div>
+                <div class="choice-title">Si, prima volta</div>
+            </div>
+            <div class="choice" onclick="window._setPrimoAnno(false, this)">
+                <div class="choice-title">No, ho gia avuto P.IVA</div>
+            </div>
+        </div>
+
+        <div id="primo-anno-info" class="info-box green" style="display:none;">
+            Ottimo! I primi 5 anni paghi solo il <strong>5% di tasse</strong>
+            invece del 15% — è il regime agevolato per le nuove attivita.
+            Un risparmio enorme.
+        </div>
+    </div>
+
+    <!-- ═══ STEP 4 — Fatturato ═══ -->
+    <div class="step" data-step="4">
+        <h2>Quanto pensi di fatturare quest'anno?</h2>
+        <p class="step-subtitle">Una stima va benissimo — puoi cambiarlo quando vuoi</p>
+
+        <div class="slider-group">
+            <div class="slider-value"><span id="ricavi-display">30.000</span> <span>&euro;</span></div>
+            <input type="range" id="w-ricavi" min="5000" max="85000" step="1000" value="30000">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);">
+                <span>5.000 &euro;</span>
+                <span>85.000 &euro;</span>
+            </div>
+        </div>
+
+        <div style="text-align:center;margin:8px 0;">
+            <span style="font-size:13px;color:var(--text2);">oppure scrivi l'importo:</span>
+            <input type="number" id="w-ricavi-input" value="30000" min="5000" max="85000" step="1000"
+                   style="width:120px;display:inline;text-align:center;margin-left:8px;">
+        </div>
+
+        <div id="sim-preview"></div>
+    </div>
+
+    <!-- ═══ STEP 5 — Come lavori ═══ -->
+    <div class="step" data-step="5">
+        <h2>Come svolgi la tua attivita?</h2>
+        <p class="step-subtitle"></p>
+
+        <div class="choices choices-3" id="step5-choices">
+            <div class="choice" onclick="window._setGestione('separata', this)">
+                <div class="choice-emoji">&#x1F4BC;</div>
+                <div class="choice-title">Freelance o consulente</div>
+                <div class="choice-desc">Lavori con la testa: sviluppatore, designer, consulente, fotografo, copywriter, formatore...</div>
+            </div>
+            <div class="choice" onclick="window._setGestione('artigiani', this)">
+                <div class="choice-emoji">&#x1F527;</div>
+                <div class="choice-title">Artigiano</div>
+                <div class="choice-desc">Lavori con le mani: idraulico, elettricista, falegname, meccanico, parrucchiere...</div>
+            </div>
+            <div class="choice" onclick="window._setGestione('commercianti', this)">
+                <div class="choice-emoji">&#x1F6CD;</div>
+                <div class="choice-title">Commerciante</div>
+                <div class="choice-desc">Vendi prodotti: negozio fisico, e-commerce, mercato, ingrosso...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ STEP 6 — Rivalsa (solo freelance) ═══ -->
+    <div class="step" data-step="6">
+        <h2>Vuoi recuperare parte dei contributi dai clienti?</h2>
+        <p class="step-subtitle"></p>
+
+        <div class="info-box blue">
+            <strong>La rivalsa INPS</strong> è una piccola aggiunta in fattura
+            che puoi addebitare ai clienti. Non è obbligatoria,
+            ma è denaro tuo.
+        </div>
+
+        <div class="card-flat" style="margin:20px 0;">
+            <p style="font-weight:600;margin-bottom:8px;">Esempio concreto:</p>
+            <p>Fattura da 1.000&euro; &rarr; diventa <strong>1.040&euro;</strong></p>
+            <p style="color:var(--text2);margin-top:4px;">
+                Quei 40&euro; extra coprono parte dei tuoi contributi INPS.
+                La maggior parte dei freelance la attiva.
+            </p>
+        </div>
+
+        <div class="toggle-group">
+            <span class="toggle-label active" id="toggle-no">Non la voglio</span>
+            <label class="toggle">
+                <input type="checkbox" id="w-rivalsa">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label" id="toggle-si">Si, aggiungila in fattura</span>
+        </div>
+    </div>
+
+    <!-- ═══ STEP 7 — Riepilogo ═══ -->
+    <div class="step" data-step="7">
+        <h2>Ecco tutto quello che ti aspetta</h2>
+        <p class="step-subtitle"></p>
+
+        <div id="riepilogo-content">
+            <p style="color:var(--text2);"><span class="spinner"></span> Preparo il riepilogo...</p>
+        </div>
+
+        <div style="margin-top:32px;">
+            <button type="button" class="btn btn-primary btn-lg" onclick="window._submitWizard()">
+                Apri la mia P.IVA adesso &rarr;
+            </button>
+            <p style="text-align:center;margin-top:12px;">
+                <a href="javascript:void(0)" onclick="window._saveAndExit()" style="font-size:14px;color:var(--text2);">
+                    Salva e torna dopo &rarr;
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="wizard-footer">
+        <div class="container">
+            <button id="btn-next" class="btn btn-primary" disabled>Avanti &rarr;</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

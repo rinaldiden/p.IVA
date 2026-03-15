@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Apertura P.IVA — FiscalAI{% endblock %}
+
+{% block nav %}{% endblock %}
+
+{% block content %}
+<input type="hidden" id="apertura-pid" value="{{ pid }}">
+
+<div style="text-align:center;padding:60px 0 20px;">
+    <h1 style="font-size:28px;font-weight:700;">Stiamo aprendo la tua P.IVA...</h1>
+</div>
+
+<div class="apertura-steps">
+    <div class="apertura-step">
+        <div class="icon">&#x23F3;</div>
+        <div class="info">
+            <div class="title">Firma digitale</div>
+            <div class="desc">Stiamo ottenendo la tua firma digitale...</div>
+        </div>
+    </div>
+    <div class="apertura-step">
+        <div class="icon">&#x23F3;</div>
+        <div class="info">
+            <div class="title">Agenzia delle Entrate</div>
+            <div class="desc">Inviamo il modulo AA9/12...</div>
+        </div>
+    </div>
+    <div class="apertura-step">
+        <div class="icon">&#x23F3;</div>
+        <div class="info">
+            <div class="title">INPS</div>
+            <div class="desc">Iscriviamo alla gestione {{ gestione }}...</div>
+        </div>
+    </div>
+</div>
+
+<p class="rotating-text" id="rotating-text">Stai facendo la cosa giusta...</p>
+{% endblock %}

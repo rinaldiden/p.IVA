@@ -1,50 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Profilo — FiscalAI{% endblock %}
+{% block nav_right %}
+<div class="nav-links">
+    <a href="/dashboard/{{ pid }}">Dashboard</a>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }}</h1>
-    <p>CF: {{ ana.get('codice_fiscale', '') }} &middot; ID: {{ pid[:16] }}...</p>
+<div style="padding-top:32px;">
+    <h1 style="font-size:24px;font-weight:700;margin-bottom:4px;">{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }}</h1>
+    <p style="color:var(--text2);font-size:14px;">CF: {{ ana.get('codice_fiscale', '') }}</p>
 </div>
 
-<div class="grid grid-3">
+<div class="stats stats-2" style="margin:24px 0;">
     <div class="stat">
-        <div class="value">{{ ana.get('ateco_principale', '—') }}</div>
-        <div class="label">ATECO Principale</div>
+        <div class="stat-value">{{ ana.get('ateco_principale', '') }}</div>
+        <div class="stat-label">ATECO</div>
     </div>
     <div class="stat">
-        <div class="value">{{ ana.get('gestione_inps', '—') | capitalize }}</div>
-        <div class="label">Gestione INPS</div>
-    </div>
-    <div class="stat">
-        <div class="value">{% if ana.get('regime_agevolato') %}5%{% else %}15%{% endif %}</div>
-        <div class="label">Aliquota</div>
+        <div class="stat-value">{% if ana.get('regime_agevolato') %}5%{% else %}15%{% endif %}</div>
+        <div class="stat-label">Aliquota</div>
     </div>
 </div>
-
-<br>
 
 <div class="card">
-    <h2>Dettagli profilo</h2>
+    <h2>Dettagli</h2>
     <table>
-        <tr><td style="color: var(--text2); width: 200px;">Comune</td><td>{{ ana.get('comune_residenza', '—') }}</td></tr>
-        <tr><td style="color: var(--text2);">Apertura P.IVA</td><td>{{ ana.get('data_apertura_piva', '—') }}</td></tr>
-        <tr><td style="color: var(--text2);">Primo anno</td><td>{% if ana.get('primo_anno') %}<span class="badge badge-green">SI</span>{% else %}<span class="badge badge-yellow">NO</span>{% endif %}</td></tr>
-        <tr><td style="color: var(--text2);">Regime agevolato</td><td>{% if ana.get('regime_agevolato') %}<span class="badge badge-green">5%</span>{% else %}<span class="badge badge-yellow">15%</span>{% endif %}</td></tr>
-        <tr><td style="color: var(--text2);">Rivalsa INPS 4%</td><td>{% if ana.get('rivalsa_inps_4') %}<span class="badge badge-blue">SI</span>{% else %}NO{% endif %}</td></tr>
-        <tr><td style="color: var(--text2);">Riduzione 35%</td><td>{% if ana.get('riduzione_inps_35') %}<span class="badge badge-blue">SI</span>{% else %}NO{% endif %}</td></tr>
+        <tr><td style="color:var(--text2);width:200px;">Gestione INPS</td><td>{{ ana.get('gestione_inps', '') | capitalize }}</td></tr>
+        <tr><td style="color:var(--text2);">Comune</td><td>{{ ana.get('comune_residenza', '') }}</td></tr>
+        <tr><td style="color:var(--text2);">Apertura P.IVA</td><td>{{ ana.get('data_apertura_piva', '') }}</td></tr>
+        <tr><td style="color:var(--text2);">Primo anno</td><td>{% if ana.get('primo_anno') %}<span class="badge badge-green">SI</span>{% else %}<span class="badge badge-yellow">NO</span>{% endif %}</td></tr>
+        <tr><td style="color:var(--text2);">Rivalsa INPS 4%</td><td>{% if ana.get('rivalsa_inps_4') %}<span class="badge badge-blue">SI</span>{% else %}No{% endif %}</td></tr>
+        <tr><td style="color:var(--text2);">Riduzione 35%</td><td>{% if ana.get('riduzione_inps_35') %}<span class="badge badge-blue">SI</span>{% else %}No{% endif %}</td></tr>
         {% if ana.get('ateco_secondari') %}
-        <tr><td style="color: var(--text2);">ATECO secondari</td><td>{{ ana.get('ateco_secondari', []) | join(', ') }}</td></tr>
+        <tr><td style="color:var(--text2);">ATECO secondari</td><td>{{ ana.get('ateco_secondari', []) | join(', ') }}</td></tr>
         {% endif %}
     </table>
 </div>
 
-<div style="display: flex; gap: 8px; padding: 16px 0;">
-    <a href="/simulazione/{{ pid }}" class="btn btn-primary">Simulazione fiscale</a>
-    <a href="/fattura/{{ pid }}" class="btn btn-secondary">Emetti fattura</a>
-    <form method="POST" action="/profilo/{{ pid }}/delete" style="margin-left: auto;"
+<div style="display:flex;gap:8px;padding:16px 0;flex-wrap:wrap;">
+    <a href="/dashboard/{{ pid }}" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
+    <a href="/simulazione/{{ pid }}" class="btn btn-primary btn-sm">Simulazione fiscale</a>
+    <a href="/fattura/{{ pid }}" class="btn btn-secondary btn-sm">Emetti fattura</a>
+    <form method="POST" action="/profilo/{{ pid }}/delete" style="margin-left:auto;"
           onsubmit="return confirm('Eliminare questo profilo?')">
-        <button type="submit" class="btn btn-danger btn-sm">Elimina</button>
+        <button type="submit" class="btn btn-danger btn-sm">Elimina profilo</button>
     </form>
 </div>
 {% endblock %}
