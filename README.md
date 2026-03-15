@@ -3,7 +3,7 @@
 **Sistema multi-agente completamente autonomo per gestire il ciclo fiscale completo di un contribuente forfettario italiano.**
 
 Dalla apertura della P.IVA fino all'invio telematico della dichiarazione dei redditi.
-Obiettivo: zero commercialista, zero intervento umano. Stato attuale: motore fiscale e infrastruttura completati, agenti operativi in sviluppo.
+Obiettivo: zero commercialista, zero intervento umano. Tutti gli 11 agenti implementati con logica completa e 204 test. Mancano solo i canali esterni (SDI, PSD2, Entratel) per la produzione.
 
 ---
 
@@ -250,24 +250,23 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 | Agent8 — Invoicing | MVP ✅ | FatturaPA XML, marca da bollo, rivalsa INPS 4%, numerazione progressiva, esiti SDI, 12 test |
 | Agent10 — NormativeWatcher | MVP ✅ | RSS GU, diff engine, scheduler, audit trail |
 | Shared Messaging | MVP ✅ | Redis Streams, publisher/consumer, supervisor listener |
-| Supervisor | Scheletro 🟡 | Persistenza profili flat, save_from_agent0, no orchestrazione |
+| Supervisor | Scheletro 🟡 | Persistenza profili flat, save_from_agent0, orchestrazione via Agent9 |
 | Web App | MVP ✅ | Dashboard con sim live, gestione spese, fattura azienda/privato, lookup P.IVA VIES, storico fatture, stati SDI, download XML |
 | Shared Config | MVP ✅ | ATECO catalog con gestione_inps (74 codici), INPS rates 2024-2025 completi |
-| Agent1 — Collector | Stub 🟡 | Interfaccia definita, logica da implementare |
-| Agent2 — Categorizer | Stub 🟡 | Interfaccia definita, logica da implementare |
-| Agent4 — Compliance | Stub 🟡 | Interfaccia definita, logica da implementare |
-| Agent5 — Declaration | Stub 🟡 | Interfaccia definita, logica da implementare |
-| Agent7 — Advisor | Stub 🟡 | Interfaccia definita, logica da implementare |
-| Agent9 — Notifier | Stub 🟡 | Interfaccia definita, logica da implementare |
+| Agent1 — Collector | MVP ✅ | 3 canali (SDI XML parser, PSD2 normalizer, OCR), merge/dedup, consent lifecycle, 25 test |
+| Agent2 — Categorizer | MVP ✅ | Categorizzazione ATECO per keyword, expense classifier, revenue counter, riconciliazione fattura↔pagamento, 19 test |
+| Agent4 — Compliance | MVP ✅ | Soglia 85k (alert 70/80/90/100%), check scadenze F24, anomalie (concentrazione clienti, gap numerazione), bollo, INPS, 18 test |
+| Agent5 — Declaration | MVP ✅ | Quadro LM completo (LM21-LM38), Quadro RR (INPS), validazione pre-invio, riepilogo, dry-run submit, 15 test |
+| Agent7 — Advisor | MVP ✅ | Confronto forfettario/ordinario/SRL, soglia convenienza, what-if, ottimizzazione multi-ATECO, timing fatturazione, 17 test |
+| Agent9 — Supervisor | MVP ✅ | Pipeline orchestrator (chiama tutti gli agent in sequenza), health check, error handling, notifiche multicanale (email/Telegram/push), template italiani, 25 test |
 
 ### Cosa manca per andare in produzione
 
 - **Autenticazione utente** — login/registrazione con session Flask (secret_key impostata, mancano route login/logout e protezione endpoint)
-- **SDI reale** — attualmente mock; serve integrazione intermediario API (Aruba 25€/anno o A-Cube free tier consigliati)
+- **Canali esterni reali** — SDI (serve intermediario API, consigliato Aruba 25€/anno o A-Cube free tier), PSD2 Open Banking (serve AISP license o aggregatore), OCR (serve servizio cloud)
 - **Database** — persistenza su file JSON, da migrare a PostgreSQL per multi-utente
-- **Test coverage** — 85 test passano; mancano test per route web, artigiani/commercianti in Agent0, edge case spese/fatture
-- **Implementazione agent stub** — Agent1,2,4,5,7,9 hanno solo interfaccia, logica business da scrivere
-- **Orchestrazione Supervisor** — il Supervisor salva profili ma non coordina ancora il flusso tra agenti
+- **Test coverage** — 204 test passano; mancano test per route web e integration test end-to-end
+- **Invio telematico dichiarazione** — Agent5 genera il modello completo ma l'invio richiede intermediario Entratel
 
 ---
 
