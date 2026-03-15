@@ -14,45 +14,116 @@
 
 {% if not result %}
 <form method="POST" style="margin-top:24px;">
+    <!-- CLIENT TYPE -->
     <div class="card">
         <h2>A chi fatturi?</h2>
-        <div class="form-row form-row-2">
-            <div class="form-group">
-                <label>Nome azienda o persona</label>
-                <input type="text" name="cliente_denominazione" required placeholder="Acme S.r.l.">
+        <div class="client-type-grid">
+            <div class="client-type-card selected" id="ct-azienda" onclick="window._setClientType('azienda')">
+                <div class="emoji">&#x1F3E2;</div>
+                <div class="title">Azienda o Professionista</div>
+                <div class="desc">(con P.IVA)</div>
             </div>
-            <div class="form-group">
-                <label>Partita IVA</label>
-                <input type="text" name="cliente_piva" placeholder="09876543210">
-            </div>
-        </div>
-        <div class="form-row form-row-2">
-            <div class="form-group">
-                <label>Codice Fiscale</label>
-                <input type="text" name="cliente_cf" placeholder="09876543210">
-            </div>
-            <div class="form-group">
-                <label>Codice SDI
-                    <span style="font-weight:400;color:var(--text2);font-size:12px;">(lo trovi sui dati del cliente)</span>
-                </label>
-                <input type="text" name="cliente_sdi" placeholder="0000000" value="0000000" maxlength="7">
+            <div class="client-type-card" id="ct-privato" onclick="window._setClientType('privato')">
+                <div class="emoji">&#x1F464;</div>
+                <div class="title">Persona privata</div>
+                <div class="desc">(senza P.IVA)</div>
             </div>
         </div>
-        <div class="form-row form-row-3">
+        <input type="hidden" name="tipo_cliente" id="tipo-cliente" value="azienda">
+    </div>
+
+    <!-- AZIENDA FORM -->
+    <div id="form-azienda">
+        <div class="card">
+            <h2>Dati azienda</h2>
             <div class="form-group">
-                <label>Indirizzo</label>
-                <input type="text" name="cliente_indirizzo" placeholder="Via Milano 42">
+                <label>Partita IVA cliente</label>
+                <input type="text" id="lookup-piva" placeholder="12345678901" maxlength="11" inputmode="numeric"
+                       oninput="window._lookupPiva(this.value)">
+                <div id="piva-hint" style="font-size:13px;color:var(--text2);margin-top:4px;">Inserisci la P.IVA e compiliamo tutto automaticamente</div>
             </div>
-            <div class="form-group">
-                <label>CAP e Comune</label>
-                <div style="display:flex;gap:8px;">
-                    <input type="text" name="cliente_cap" placeholder="20100" maxlength="5" style="width:80px;flex-shrink:0;">
-                    <input type="text" name="cliente_comune" placeholder="Milano">
+            <div id="lookup-result" style="display:none;"></div>
+            <div id="manual-azienda">
+                <div class="form-row form-row-2">
+                    <div class="form-group">
+                        <label>Nome azienda o persona</label>
+                        <input type="text" name="cliente_denominazione" id="c-denom" required placeholder="Acme S.r.l.">
+                    </div>
+                    <div class="form-group">
+                        <label>Partita IVA</label>
+                        <input type="text" name="cliente_piva" id="c-piva" placeholder="09876543210">
+                    </div>
+                </div>
+                <div class="form-row form-row-2">
+                    <div class="form-group">
+                        <label>Codice Fiscale</label>
+                        <input type="text" name="cliente_cf" id="c-cf" placeholder="09876543210">
+                    </div>
+                    <div class="form-group">
+                        <label>Codice SDI</label>
+                        <input type="text" name="cliente_sdi" id="c-sdi" placeholder="0000000" value="0000000" maxlength="7">
+                    </div>
+                </div>
+                <div class="form-row form-row-3">
+                    <div class="form-group">
+                        <label>Indirizzo</label>
+                        <input type="text" name="cliente_indirizzo" id="c-addr" placeholder="Via Milano 42">
+                    </div>
+                    <div class="form-group">
+                        <label>CAP e Comune</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" name="cliente_cap" id="c-cap" placeholder="20100" maxlength="5" style="width:80px;flex-shrink:0;">
+                            <input type="text" name="cliente_comune" id="c-comune" placeholder="Milano">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Prov.</label>
+                        <input type="text" name="cliente_provincia" id="c-prov" placeholder="MI" maxlength="2" style="width:70px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRIVATO FORM -->
+    <div id="form-privato" style="display:none;">
+        <div class="card">
+            <h2>Dati cliente privato</h2>
+            <div class="form-row form-row-2">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" name="cliente_nome" placeholder="Mario">
+                </div>
+                <div class="form-group">
+                    <label>Cognome</label>
+                    <input type="text" name="cliente_cognome" placeholder="Rossi">
                 </div>
             </div>
             <div class="form-group">
-                <label>Prov.</label>
-                <input type="text" name="cliente_provincia" placeholder="MI" maxlength="2" style="width:70px;">
+                <label>Codice Fiscale</label>
+                <input type="text" name="cliente_cf" placeholder="RSSMRA80A01H501U" maxlength="16"
+                       style="text-transform:uppercase;" id="privato-cf">
+                <div id="privato-cf-hint" style="font-size:13px;margin-top:4px;"></div>
+            </div>
+            <div class="form-row form-row-3">
+                <div class="form-group">
+                    <label>Indirizzo <span style="color:var(--text3);font-size:12px;">(facoltativo)</span></label>
+                    <input type="text" name="cliente_indirizzo" placeholder="Via Roma 1">
+                </div>
+                <div class="form-group">
+                    <label>CAP e Comune</label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" name="cliente_cap" placeholder="00100" maxlength="5" style="width:80px;flex-shrink:0;">
+                        <input type="text" name="cliente_comune" placeholder="Roma">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Prov.</label>
+                    <input type="text" name="cliente_provincia" placeholder="RM" maxlength="2" style="width:70px;">
+                </div>
+            </div>
+            <div class="info-box blue" style="margin-top:8px;">
+                Per i privati il codice SDI sara 0000000 — la fattura verra inviata via email se disponibile.
             </div>
         </div>
     </div>
@@ -62,13 +133,13 @@
         <div class="form-row form-row-2">
             <div class="form-group">
                 <label>Data fattura</label>
-                <input type="date" name="data_fattura" required value="2024-03-31">
+                <input type="date" name="data_fattura" required value="{{ today }}">
             </div>
             <div class="form-group">
                 <label>Anno (per la numerazione)</label>
                 <select name="anno_fattura">
-                    <option value="2024">2024</option>
                     <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
                 </select>
             </div>
         </div>
@@ -83,9 +154,9 @@
         </div>
         <div id="linee-container">
             <div class="line-item">
-                <div class="form-group"><input type="text" name="linea_desc" required placeholder="es. Sviluppo sito web — marzo 2024"></div>
-                <div class="form-group"><input type="text" name="linea_qty" value="1" placeholder="1"></div>
-                <div class="form-group"><input type="text" name="linea_prezzo" required placeholder="3000.00"></div>
+                <div class="form-group"><input type="text" name="linea_desc" required placeholder="es. Sviluppo sito web — marzo 2026"></div>
+                <div class="form-group"><input type="text" name="linea_qty" value="1" placeholder="1" inputmode="numeric"></div>
+                <div class="form-group"><input type="text" name="linea_prezzo" required placeholder="3000.00" inputmode="decimal"></div>
             </div>
         </div>
         <button type="button" onclick="window._addLine()" class="btn btn-secondary btn-sm" style="margin-top:4px;">
@@ -103,18 +174,23 @@
 
 <!-- RESULT -->
 <div style="margin-top:24px;">
-    <div class="stats" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="info-box green">
+        <p style="font-weight:600;font-size:16px;">Fattura generata!</p>
+        <p>Numero: {{ result.numero }} — {{ result.data }} — {{ result.formato_trasmissione }}</p>
+    </div>
+
+    <div class="stats" style="grid-template-columns:1fr 1fr 1fr;margin:16px 0;">
         <div class="stat">
             <div class="stat-value" style="color:var(--primary);">{{ result.numero }}</div>
             <div class="stat-label">Numero</div>
         </div>
         <div class="stat">
-            <div class="stat-value">{{ result.data }}</div>
-            <div class="stat-label">Data</div>
+            <div class="stat-value">{{ "{:,.2f}".format(result.totale_documento) }} &euro;</div>
+            <div class="stat-label">Totale documento</div>
         </div>
         <div class="stat">
-            <div class="stat-value">{{ result.formato_trasmissione }}</div>
-            <div class="stat-label">Formato SDI</div>
+            <div class="stat-value" style="color:var(--success);">{{ "{:,.2f}".format(result.ricavo_netto) }} &euro;</div>
+            <div class="stat-label">Ricavo netto</div>
         </div>
     </div>
 </div>
@@ -163,6 +239,7 @@
         <tr><td style="color:var(--text2);">IVA</td><td><span class="badge badge-blue">N2.2</span> Non soggetto — operazione esente</td></tr>
         <tr><td style="color:var(--text2);">Bollo</td><td>{% if result.bollo_applicato %}<span class="badge badge-yellow">2,00 &euro;</span> virtuale{% else %}<span class="badge badge-green">NO</span> sotto soglia{% endif %}</td></tr>
         <tr><td style="color:var(--text2);">Rivalsa INPS</td><td>{% if result.rivalsa_inps_4 %}<span class="badge badge-blue">4%</span> {{ "{:,.2f}".format(result.importo_rivalsa) }} &euro;{% else %}Non applicata{% endif %}</td></tr>
+        <tr><td style="color:var(--text2);">Stato SDI</td><td><span class="sdi-status at">&#x23F3; In attesa di consegna</span></td></tr>
     </table>
 </div>
 
@@ -177,9 +254,78 @@
 
 <div style="padding:16px 0;display:flex;gap:8px;flex-wrap:wrap;">
     <a href="/fattura/{{ pid }}" class="btn btn-primary btn-sm">Nuova fattura</a>
+    <a href="/fatture/{{ pid }}" class="btn btn-secondary btn-sm">Storico fatture</a>
     <a href="/simulazione/{{ pid }}" class="btn btn-secondary btn-sm">Simulazione fiscale</a>
     <a href="/dashboard/{{ pid }}" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
 </div>
 
 {% endif %}
+
+<script>
+// Client type toggle
+window._setClientType = function(tipo) {
+    document.getElementById('tipo-cliente').value = tipo;
+    document.getElementById('ct-azienda').classList.toggle('selected', tipo === 'azienda');
+    document.getElementById('ct-privato').classList.toggle('selected', tipo === 'privato');
+    document.getElementById('form-azienda').style.display = tipo === 'azienda' ? 'block' : 'none';
+    document.getElementById('form-privato').style.display = tipo === 'privato' ? 'block' : 'none';
+};
+
+// P.IVA lookup
+let pivaTimeout = null;
+window._lookupPiva = function(val) {
+    clearTimeout(pivaTimeout);
+    val = val.replace(/\D/g, '');
+    if (val.length < 11) {
+        document.getElementById('lookup-result').style.display = 'none';
+        document.getElementById('piva-hint').textContent = 'Inserisci la P.IVA e compiliamo tutto automaticamente';
+        return;
+    }
+    document.getElementById('piva-hint').innerHTML = '<span class="spinner"></span> Sto cercando i dati azienda...';
+    pivaTimeout = setTimeout(() => {
+        fetch('/api/lookup-piva?piva=' + val)
+            .then(r => r.json())
+            .then(data => {
+                if (data.trovata) {
+                    document.getElementById('c-denom').value = data.ragione_sociale || '';
+                    document.getElementById('c-piva').value = val;
+                    document.getElementById('c-addr').value = data.indirizzo || '';
+                    document.getElementById('c-cap').value = data.cap || '';
+                    document.getElementById('c-comune').value = data.comune || '';
+                    document.getElementById('c-prov').value = data.provincia || '';
+                    document.getElementById('lookup-result').innerHTML = '<div class="info-box green" style="margin-bottom:12px;">&#10003; Azienda trovata: <strong>' + data.ragione_sociale + '</strong></div>';
+                    document.getElementById('lookup-result').style.display = 'block';
+                    document.getElementById('piva-hint').textContent = '';
+                } else {
+                    document.getElementById('piva-hint').textContent = 'Non abbiamo trovato questa P.IVA — inserisci i dati manualmente';
+                    document.getElementById('c-piva').value = val;
+                    document.getElementById('lookup-result').style.display = 'none';
+                }
+            })
+            .catch(() => {
+                document.getElementById('piva-hint').textContent = 'Servizio non disponibile — inserisci i dati manualmente';
+                document.getElementById('c-piva').value = val;
+            });
+    }, 500);
+};
+
+// CF validation for privato (reuse from wizard)
+const DISPARI = {'0':1,'1':0,'2':5,'3':7,'4':9,'5':13,'6':15,'7':17,'8':19,'9':21,'A':1,'B':0,'C':5,'D':7,'E':9,'F':13,'G':15,'H':17,'I':19,'J':21,'K':2,'L':4,'M':18,'N':20,'O':11,'P':3,'Q':6,'R':8,'S':12,'T':14,'U':16,'V':10,'W':22,'X':25,'Y':24,'Z':23};
+const PARI = {'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,'I':8,'J':9,'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,'R':17,'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25};
+const cfInput = document.getElementById('privato-cf');
+if (cfInput) {
+    cfInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        const hint = document.getElementById('privato-cf-hint');
+        if (this.value.length < 16) { hint.textContent = ''; return; }
+        const cf = this.value;
+        const re = /^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/;
+        if (!re.test(cf)) { hint.innerHTML = '<span style="color:var(--error);">Formato non valido</span>'; return; }
+        let sum = 0;
+        for (let i = 0; i < 15; i++) sum += (i % 2 === 0) ? (DISPARI[cf[i]]||0) : (PARI[cf[i]]||0);
+        const ok = cf[15] === String.fromCharCode(65 + (sum % 26));
+        hint.innerHTML = ok ? '<span style="color:var(--success);">&#10003; Codice fiscale valido</span>' : '<span style="color:var(--error);">&#10007; Codice fiscale non valido</span>';
+    });
+}
+</script>
 {% endblock %}

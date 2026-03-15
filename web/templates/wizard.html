@@ -111,6 +111,56 @@
         </div>
 
         <div id="sim-preview"></div>
+
+        <!-- Expense toggle -->
+        <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <p style="font-weight:600;">Vuoi sapere quanto ti resta davvero?</p>
+                    <p style="font-size:13px;color:var(--text2);">Inserisci le tue spese di lavoro stimate</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="w-spese-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div id="spese-section" style="display:none;margin-top:16px;">
+            <div class="spesa-row">
+                <span>&#x1F4BB; Software e abbonamenti</span>
+                <div><input type="number" class="spesa-input" data-cat="software" value="0" min="0" step="100" inputmode="numeric"> &euro;/anno</div>
+            </div>
+            <div class="spesa-row">
+                <span>&#x1F4F1; Telefono e internet</span>
+                <div><input type="number" class="spesa-input" data-cat="telefono" value="0" min="0" step="100" inputmode="numeric"> &euro;/anno</div>
+            </div>
+            <div class="spesa-row">
+                <span>&#x1F697; Trasporti e carburante</span>
+                <div><input type="number" class="spesa-input" data-cat="trasporti" value="0" min="0" step="100" inputmode="numeric"> &euro;/anno</div>
+            </div>
+            <div class="spesa-row">
+                <span>&#x1F6E0; Attrezzatura e strumenti</span>
+                <div><input type="number" class="spesa-input" data-cat="attrezzatura" value="0" min="0" step="100" inputmode="numeric"> &euro;/anno</div>
+            </div>
+            <div class="spesa-row">
+                <span>&#x1F4DA; Formazione e libri</span>
+                <div><input type="number" class="spesa-input" data-cat="formazione" value="0" min="0" step="100" inputmode="numeric"> &euro;/anno</div>
+            </div>
+            <div class="spesa-row">
+                <span>&#x1F4E6; Altre spese di lavoro</span>
+                <div><input type="number" class="spesa-input" data-cat="altro" value="0" min="0" step="100" inputmode="numeric"> &euro;/anno</div>
+            </div>
+            <div id="spese-netto-preview"></div>
+        </div>
+
+        <!-- Forfettario explanation -->
+        <div class="info-box blue" style="margin-top:20px;">
+            <p style="font-weight:600;margin-bottom:8px;">Come funziona il regime forfettario</p>
+            <p>Nel regime forfettario le tue spese <strong>NON cambiano le tasse che paghi</strong>.</p>
+            <p style="margin-top:8px;">Il fisco calcola le tue tasse su una percentuale fissa del fatturato (il "coefficiente di redditivita"), indipendentemente da quanto spendi.</p>
+            <p style="margin-top:8px;color:var(--text2);">Le spese le teniamo traccia per te — cosi sai sempre quanto ti resta davvero.</p>
+        </div>
     </div>
 
     <!-- ═══ STEP 5 — Rivalsa (solo gestione separata) ═══ -->

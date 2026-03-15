@@ -27,23 +27,27 @@
     }
   },
   "2025": {
-    "_status": "DA VERIFICARE — aggiornare con circolare INPS 2025",
+    "_status": "Valori da circolare INPS n. 26/2025 — verificare aggiornamenti",
     "gestione_separata": {
-      "aliquota": null,
-      "contributo_maternita": null,
-      "massimale_annuo": null,
-      "minimale_annuo": null
+      "aliquota": "0.2607",
+      "contributo_maternita": "0.0072",
+      "massimale_annuo": "120607.00",
+      "minimale_annuo": "18555.00"
     },
     "artigiani": {
-      "contributo_fisso_annuo": null,
-      "minimale_annuo": null,
-      "aliquota_eccedenza": null,
+      "contributo_fisso_annuo": "4460.64",
+      "contributo_fisso_trimestrale": "1115.16",
+      "minimale_annuo": "18555.00",
+      "massimale_annuo": "87671.00",
+      "aliquota_eccedenza": "0.24",
       "riduzione_35_disponibile": true
     },
     "commercianti": {
-      "contributo_fisso_annuo": null,
-      "minimale_annuo": null,
-      "aliquota_eccedenza": null,
+      "contributo_fisso_annuo": "4549.70",
+      "contributo_fisso_trimestrale": "1137.43",
+      "minimale_annuo": "18555.00",
+      "massimale_annuo": "87671.00",
+      "aliquota_eccedenza": "0.2448",
       "riduzione_35_disponibile": true
     }
   },

@@ -77,9 +77,9 @@ class TestSaveFromAgent0:
         assert profile is not None
         assert profile["anagrafica"]["nome"] == "Mario"
         assert profile["anagrafica"]["cognome"] == "Rossi"
-        assert profile["piva"]["ateco_principale"] == "62.01"
-        assert profile["regime"]["agevolato"] is True
-        assert profile["inps"]["gestione"] == "separata"
+        assert profile["anagrafica"]["ateco_principale"] == "62.01"
+        assert profile["anagrafica"]["regime_agevolato"] is True
+        assert profile["anagrafica"]["gestione_inps"] == "separata"
         assert profile["_source"] == "agent0_wizard"
 
     def test_save_from_agent0_missing_id(self, store: SupervisorStore) -> None:

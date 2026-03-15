@@ -12,7 +12,7 @@
 <div class="container-wide">
     {% if welcome %}
     <div class="welcome-box">
-        <h2>La tua P.IVA è aperta!</h2>
+        <h2>La tua P.IVA e aperta!</h2>
         <p>Da oggi puoi concentrarti su quello che sai fare.</p>
     </div>
     {% endif %}
@@ -22,7 +22,7 @@
     </div>
 
     <!-- STATS -->
-    <div class="stats stats-4">
+    <div class="stats" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;">
         <div class="stat">
             <div class="stat-value">{{ "{:,.0f}".format(fatturato_anno) }} &euro;</div>
             <div class="stat-label">Fatturato {{ anno }}</div>
@@ -30,6 +30,10 @@
         <div class="stat">
             <div class="stat-value">{{ "{:,.0f}".format(da_accantonare_mese) }} &euro;</div>
             <div class="stat-label">Da accantonare / mese</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" style="color:var(--success);">{{ "{:,.0f}".format(netto_reale_mese) }} &euro;</div>
+            <div class="stat-label">Netto reale / mese</div>
         </div>
         <div class="stat">
             <div class="stat-value">{% if prossima_scadenza %}{{ prossima_scadenza.data }}{% else %}Nessuna{% endif %}</div>
@@ -57,9 +61,88 @@
         </a>
     </div>
 
+    <!-- SPESE -->
+    <div class="card" style="margin-top:8px;">
+        <h2>Le mie spese — per sapere quanto ti resta davvero</h2>
+        <div class="info-box blue" style="margin-bottom:16px;">
+            Nel regime forfettario le spese non cambiano le tue tasse.
+            Le teniamo traccia per te — cosi sai sempre quanto ti resta davvero ogni mese.
+        </div>
+
+        <table id="spese-table">
+            <thead>
+                <tr>
+                    <th>Categoria</th>
+                    <th class="text-right">Importo/anno</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in spese %}
+                <tr>
+                    <td>{{ s.categoria }}</td>
+                    <td class="text-right text-mono">{{ "{:,.0f}".format(s.importo_annuo) }} &euro;</td>
+                    <td style="width:80px;text-align:right;">
+                        <button class="btn btn-secondary btn-sm" onclick="window._editSpesa('{{ s.categoria }}', {{ s.importo_annuo }})">Modifica</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not spese %}
+                <tr id="no-spese-row">
+                    <td colspan="3" style="text-align:center;color:var(--text2);padding:20px;">
+                        Nessuna spesa ancora — aggiungi le tue spese di lavoro
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+            <tfoot>
+                <tr style="border-top:2px solid var(--border);">
+                    <td style="font-weight:600;">Totale spese</td>
+                    <td class="text-right text-mono" style="font-weight:600;" id="spese-totale">{{ "{:,.0f}".format(spese_anno) }} &euro;/anno</td>
+                    <td class="text-right text-mono" style="color:var(--text2);font-size:12px;" id="spese-totale-mese">{{ "{:,.0f}".format(spese_mese) }} &euro;/mese</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="window._addSpesaPreset('Software e abbonamenti')">+ Software</button>
+            <button class="btn btn-secondary btn-sm" onclick="window._addSpesaPreset('Telefono e internet')">+ Telefono</button>
+            <button class="btn btn-secondary btn-sm" onclick="window._addSpesaPreset('Trasporti')">+ Trasporti</button>
+            <button class="btn btn-secondary btn-sm" onclick="window._addSpesaPreset('Attrezzatura')">+ Attrezzatura</button>
+            <button class="btn btn-secondary btn-sm" onclick="window._addSpesaPreset('Formazione')">+ Formazione</button>
+            <button class="btn btn-primary btn-sm" onclick="window._addSpesaCustom()">+ Spesa personalizzata</button>
+        </div>
+
+        <!-- Riepilogo netto -->
+        {% if fatturato_anno > 0 %}
+        <div style="margin-top:20px;padding:20px;background:var(--bg2);border-radius:var(--radius-card);">
+            <p style="font-weight:600;margin-bottom:12px;">Il tuo quadro completo</p>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:14px;">
+                <span style="color:var(--text2);">Fatturato {{ anno }}</span>
+                <span style="font-weight:600;">{{ "{:,.0f}".format(fatturato_anno) }} &euro;</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:14px;">
+                <span style="color:var(--text2);">Tasse + INPS</span>
+                <span style="font-weight:600;color:var(--error);">-{{ "{:,.0f}".format(tasse_inps_anno) }} &euro;</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:14px;">
+                <span style="color:var(--text2);">Spese di lavoro</span>
+                <span style="font-weight:600;color:var(--error);">-{{ "{:,.0f}".format(spese_anno) }} &euro;</span>
+            </div>
+            <div style="border-top:2px solid var(--border);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;">
+                <span style="font-weight:700;">Netto reale</span>
+                <span style="font-weight:700;color:var(--success);">{{ "{:,.0f}".format(netto_reale_anno) }} &euro;/anno — {{ "{:,.0f}".format(netto_reale_mese) }} &euro;/mese</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <!-- FATTURE -->
     <div class="card" style="margin-top:8px;">
-        <h2>Ultime fatture</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h2>Ultime fatture</h2>
+            {% if fatture %}<a href="/fatture/{{ pid }}" style="font-size:14px;">Storico completo &rarr;</a>{% endif %}
+        </div>
         {% if fatture %}
         <table>
             <thead>
@@ -68,6 +151,7 @@
                     <th>Data</th>
                     <th>Cliente</th>
                     <th class="text-right">Importo</th>
+                    <th>Stato</th>
                 </tr>
             </thead>
             <tbody>
@@ -77,6 +161,12 @@
                     <td>{{ f.data }}</td>
                     <td>{{ f.cliente }}</td>
                     <td class="text-right text-mono">{{ f.importo }} &euro;</td>
+                    <td>
+                        {% set stato = f.get('stato_sdi', 'AT') %}
+                        {% if stato == 'RC' %}<span class="sdi-status rc">&#10003; Consegnata</span>
+                        {% elif stato == 'NS' %}<span class="sdi-status ns">&#10007; Scartata</span>
+                        {% else %}<span class="sdi-status at">&#x23F3; In transito</span>{% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -116,4 +206,37 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+const PID = '{{ pid }}';
+
+window._editSpesa = function(cat, importo) {
+    const nuovo = prompt('Importo annuo per "' + cat + '":', importo);
+    if (nuovo === null) return;
+    fetch('/api/spese/' + PID, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({categoria: cat, importo_annuo: parseFloat(nuovo) || 0})
+    }).then(() => location.reload());
+};
+
+window._addSpesaPreset = function(cat) {
+    const importo = prompt('Importo annuo per "' + cat + '":', '0');
+    if (importo === null) return;
+    fetch('/api/spese/' + PID, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({categoria: cat, importo_annuo: parseFloat(importo) || 0})
+    }).then(() => location.reload());
+};
+
+window._addSpesaCustom = function() {
+    const cat = prompt('Nome della spesa:');
+    if (!cat) return;
+    const importo = prompt('Importo annuo:', '0');
+    if (importo === null) return;
+    fetch('/api/spese/' + PID, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({categoria: cat, importo_annuo: parseFloat(importo) || 0})
+    }).then(() => location.reload());
+};
+</script>
 {% endblock %}

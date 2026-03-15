@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Storico Fatture — FiscalAI{% endblock %}
+{% block nav_right %}
+<div class="nav-links">
+    <a href="/dashboard/{{ pid }}">Dashboard</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="padding-top:32px;">
+    <h1 style="font-size:24px;font-weight:700;margin-bottom:4px;">Storico fatture</h1>
+    <p style="color:var(--text2);">{{ ana.get('nome', '') }} {{ ana.get('cognome', '') }} — {{ fatture|length }} fatture emesse</p>
+</div>
+
+{% if fatture %}
+<div class="card" style="margin-top:24px;">
+    <table>
+        <thead>
+            <tr>
+                <th>N.</th>
+                <th>Data</th>
+                <th>Cliente</th>
+                <th class="text-right">Importo</th>
+                <th>Stato SDI</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in fatture %}
+            <tr>
+                <td><strong>{{ f.numero }}</strong></td>
+                <td>{{ f.data }}</td>
+                <td>{{ f.cliente }}</td>
+                <td class="text-right text-mono">{{ f.importo }} &euro;</td>
+                <td>
+                    {% set stato = f.get('stato_sdi', 'AT') %}
+                    {% if stato == 'RC' %}<span class="sdi-status rc">&#10003; Consegnata</span>
+                    {% elif stato == 'NS' %}<span class="sdi-status ns">&#10007; Scartata</span>
+                    {% elif stato == 'MC' %}<span class="sdi-status mc">&#x26A0; Problema</span>
+                    {% else %}<span class="sdi-status at">&#x23F3; In transito</span>{% endif %}
+                </td>
+                <td style="width:100px;text-align:right;">
+                    {% if f.get('xml') %}
+                    <a href="/fattura/{{ pid }}/xml/{{ loop.index0 }}" class="btn btn-secondary btn-sm">XML</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top:16px;padding:16px;background:var(--bg2);border-radius:var(--radius-card);">
+    <div style="display:flex;justify-content:space-between;font-size:15px;">
+        <span>Fatturato totale {{ anno }}</span>
+        <span style="font-weight:700;">{{ "{:,.2f}".format(totale_importo) }} &euro;</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:15px;margin-top:4px;">
+        <span>Ricavi netti {{ anno }}</span>
+        <span style="font-weight:700;color:var(--success);">{{ "{:,.2f}".format(totale_netto) }} &euro;</span>
+    </div>
+</div>
+
+<div class="info-box blue" style="margin-top:16px;">
+    <p style="font-weight:600;margin-bottom:4px;">Legenda stati SDI</p>
+    <p>&#10003; <strong>RC</strong> = Consegnata al cliente</p>
+    <p>&#x23F3; <strong>AT</strong> = In transito</p>
+    <p>&#x26A0; <strong>MC</strong> = Problema consegna — controlla email cliente</p>
+    <p>&#10007; <strong>NS</strong> = Scartata — clicca per vedere il motivo</p>
+</div>
+{% else %}
+<div class="empty-state" style="margin-top:40px;">
+    <h3>Nessuna fattura ancora</h3>
+    <p>Emetti la tua prima fattura per iniziare.</p>
+    <br>
+    <a href="/fattura/{{ pid }}" class="btn btn-primary btn-sm">Emetti fattura &rarr;</a>
+</div>
+{% endif %}
+
+<div style="padding:16px 0;">
+    <a href="/fattura/{{ pid }}" class="btn btn-primary btn-sm">Nuova fattura</a>
+    <a href="/dashboard/{{ pid }}" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
+</div>
+{% endblock %}

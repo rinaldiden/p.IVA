@@ -85,8 +85,8 @@ class SupervisorStore:
     def save_from_agent0(self, profilo: dict[str, Any]) -> None:
         """Persist an Agent0 onboarding profile.
 
-        Extracts contribuente_id and saves the full profile
-        so it survives system restarts.
+        Saves a flat anagrafica dict so all fields are directly accessible
+        via profile["anagrafica"][field].
         """
         cid = profilo.get("contribuente_id", "")
         if not cid:
@@ -98,22 +98,17 @@ class SupervisorStore:
                 "cognome": profilo.get("cognome", ""),
                 "codice_fiscale": profilo.get("codice_fiscale", ""),
                 "comune_residenza": profilo.get("comune_residenza", ""),
-            },
-            "piva": {
-                "data_apertura": profilo.get("data_apertura_piva", ""),
+                "data_apertura_piva": profilo.get("data_apertura_piva", ""),
                 "ateco_principale": profilo.get("ateco_principale", ""),
                 "ateco_secondari": profilo.get("ateco_secondari", []),
-            },
-            "regime": {
-                "tipo": "forfettario",
-                "agevolato": profilo.get("regime_agevolato", True),
+                "regime_agevolato": profilo.get("regime_agevolato", True),
                 "primo_anno": profilo.get("primo_anno", True),
+                "gestione_inps": profilo.get("gestione_inps", "separata"),
+                "riduzione_inps_35": profilo.get("riduzione_inps_35", False),
+                "rivalsa_inps_4": profilo.get("rivalsa_inps_4", False),
             },
-            "inps": {
-                "gestione": profilo.get("gestione_inps", "separata"),
-                "riduzione_35": profilo.get("riduzione_inps_35", False),
-                "rivalsa_4": profilo.get("rivalsa_inps_4", False),
-            },
+            "spese": [],
+            "fatture": [],
             "stato": profilo.get("stato", "onboarding"),
             "_source": "agent0_wizard",
         })

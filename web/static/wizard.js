@@ -318,14 +318,23 @@
         sync(slider.value);
     }
 
+    function getSpeseTotali() {
+        let totale = 0;
+        document.querySelectorAll('.spesa-input').forEach(input => {
+            totale += parseInt(input.value) || 0;
+        });
+        return totale;
+    }
+
     function fetchSimulation(ricavi) {
         const container = document.getElementById('sim-preview');
         if (!container) return;
 
         const ateco = wizardData.ateco || '62.01.00';
         const primo = wizardData.primo_anno !== undefined ? wizardData.primo_anno : true;
+        const gestione = wizardData.gestione || 'separata';
 
-        fetch(`/api/simula?ricavi=${ricavi}&ateco=${encodeURIComponent(ateco)}&primo_anno=${primo}`)
+        fetch(`/api/simula?ricavi=${ricavi}&ateco=${encodeURIComponent(ateco)}&primo_anno=${primo}&gestione=${gestione}`)
             .then(r => r.json())
             .then(data => {
                 if (data.error) {
@@ -337,11 +346,17 @@
                 const inps = parseFloat(data.contributo_inps);
                 const totale = imposta + inps;
                 const mensile = parseFloat(data.rata_mensile);
-                const inTasca = (ricavi - totale) / 12;
+
+                // Store simulation data for riepilogo
+                wizardData._lastSim = data;
 
                 let html = `
                     <div class="preview-box">
-                        <div style="font-weight:600;margin-bottom:12px;">Con ${ricavi.toLocaleString('it-IT')}\u20AC di fatturato:</div>
+                        <div style="font-weight:600;margin-bottom:12px;">Situazione fiscale</div>
+                        <div class="row">
+                            <span class="label">Fatturato stimato</span>
+                            <span class="value">${fmt(ricavi)}</span>
+                        </div>
                         <div class="row">
                             <span class="label">Tasse (imposta sostitutiva)</span>
                             <span class="value">${fmt(imposta)}</span>
@@ -352,12 +367,8 @@
                         </div>
                         <hr class="divider">
                         <div class="row highlight">
-                            <span class="label">Da mettere da parte</span>
+                            <span class="label">Da accantonare</span>
                             <span class="value">${fmt(mensile)}/mese</span>
-                        </div>
-                        <div class="row highlight">
-                            <span class="label">Ti restano in tasca</span>
-                            <span class="value">${fmt(inTasca)}/mese</span>
                         </div>
                     </div>
                 `;
@@ -370,17 +381,51 @@
                 }
 
                 container.innerHTML = html;
+
+                // Update spese netto preview if visible
+                updateSpesePreview(ricavi, totale);
             })
             .catch(() => {
                 container.innerHTML = '<p style="color:var(--text2);">Calcolo non disponibile</p>';
             });
     }
 
+    function updateSpesePreview(ricavi, tasseInps) {
+        const box = document.getElementById('spese-netto-preview');
+        if (!box) return;
+        const speseToggle = document.getElementById('w-spese-toggle');
+        if (!speseToggle || !speseToggle.checked) { box.innerHTML = ''; return; }
+
+        if (!ricavi) ricavi = wizardData.ricavi || 30000;
+        if (!tasseInps) {
+            const sim = wizardData._lastSim;
+            if (sim) tasseInps = parseFloat(sim.imposta_sostitutiva) + parseFloat(sim.contributo_inps);
+            else tasseInps = 0;
+        }
+
+        const spese = getSpeseTotali();
+        wizardData.spese_totali = spese;
+        const netto = ricavi - tasseInps - spese;
+        const nettoMese = Math.round(netto / 12);
+
+        box.innerHTML = `
+            <div class="preview-box" style="margin-top:16px;background:var(--success-light);">
+                <div style="font-weight:600;margin-bottom:12px;">Quello che ti resta davvero</div>
+                <div class="row"><span class="label">Fatturato stimato</span><span class="value">${fmt(ricavi)}</span></div>
+                <div class="row"><span class="label">Tasse + INPS</span><span class="value" style="color:var(--error);">-${fmt(tasseInps)}</span></div>
+                <div class="row"><span class="label">Le tue spese di lavoro</span><span class="value" style="color:var(--error);">-${fmt(spese)}</span></div>
+                <hr class="divider">
+                <div class="row highlight"><span class="label">Netto reale</span><span class="value" style="color:var(--success);">${fmt(netto)}/anno</span></div>
+                <div class="row highlight"><span class="label"></span><span class="value" style="color:var(--success);">${fmt(nettoMese)}/mese</span></div>
+            </div>
+        `;
+    }
+
     function fmt(n) {
         return Math.round(n).toLocaleString('it-IT') + ' \u20AC';
     }
 
-    // ── RIEPILOGO (Step 7) ───────────────────
+    // ── RIEPILOGO (Step 6) ───────────────────
 
     function buildRiepilogo() {
         collectStepData();
@@ -391,32 +436,56 @@
         const ricavi = wizardData.ricavi || 30000;
         const primo = wizardData.primo_anno;
         const nome = wizardData.nome || '';
+        const gestione = wizardData.gestione || 'separata';
+        const spese = wizardData.spese_totali || 0;
 
-        // Fetch simulation for summary
-        fetch(`/api/simula?ricavi=${ricavi}&ateco=${encodeURIComponent(wizardData.ateco || '62.01.00')}&primo_anno=${primo}`)
+        fetch(`/api/simula?ricavi=${ricavi}&ateco=${encodeURIComponent(wizardData.ateco || '62.01.00')}&primo_anno=${primo}&gestione=${gestione}`)
             .then(r => r.json())
             .then(data => {
                 const imposta = parseFloat(data.imposta_sostitutiva || 0);
                 const inps = parseFloat(data.contributo_inps || 0);
                 const totale = imposta + inps;
                 const mensile = parseFloat(data.rata_mensile || 0);
-                const inTasca = (ricavi - totale) / 12;
                 const aliquota = data.aliquota ? Math.round(parseFloat(data.aliquota) * 100) : (primo ? 5 : 15);
+
+                let speseHtml = '';
+                if (spese > 0) {
+                    const netto = ricavi - totale - spese;
+                    const nettoMese = Math.round(netto / 12);
+                    speseHtml = `
+                        <h3>Quello che ti resta davvero</h3>
+                        <div class="preview-box" style="margin:8px 0 16px;background:var(--success-light);">
+                            <div class="row"><span class="label">Fatturato</span><span class="value">${fmt(ricavi)}</span></div>
+                            <div class="row"><span class="label">Tasse + INPS</span><span class="value" style="color:var(--error);">-${fmt(totale)}</span></div>
+                            <div class="row"><span class="label">Spese stimate</span><span class="value" style="color:var(--error);">-${fmt(spese)}</span></div>
+                            <hr class="divider">
+                            <div class="row highlight"><span class="label">Netto reale</span><span class="value" style="color:var(--success);">${fmt(nettoMese)}/mese</span></div>
+                        </div>
+                    `;
+                } else {
+                    speseHtml = `
+                        <div class="info-box blue" style="margin-top:16px;">
+                            <p style="font-weight:600;">Vuoi sapere quanto ti resta davvero?</p>
+                            <p>Nella dashboard potrai inserire le tue spese abituali per calcolare il netto reale ogni mese.</p>
+                        </div>
+                    `;
+                }
 
                 container.innerHTML = `
                     <div class="riepilogo">
                         <p style="font-size:17px;">Ciao <strong>${nome}</strong>!</p>
-                        <p style="color:var(--text2);margin-top:4px;">Con <strong>${ateco}</strong> e un fatturato di <strong>${ricavi.toLocaleString('it-IT')} \u20AC</strong>, ecco la tua situazione fiscale:</p>
+                        <p style="color:var(--text2);margin-top:4px;">Con <strong>${ateco}</strong> e un fatturato di <strong>${ricavi.toLocaleString('it-IT')} \u20AC</strong>:</p>
 
-                        <h3>I tuoi numeri</h3>
+                        <h3>La tua situazione fiscale</h3>
                         <div class="preview-box" style="margin:8px 0 16px;">
                             <div class="row"><span class="label">Fatturato stimato</span><span class="value">${fmt(ricavi)}</span></div>
                             <div class="row"><span class="label">Tasse (aliquota ${aliquota}%)</span><span class="value">${fmt(imposta)}</span></div>
                             <div class="row"><span class="label">Contributi INPS</span><span class="value">${fmt(inps)}</span></div>
                             <hr class="divider">
-                            <div class="row highlight"><span class="label">Da parte ogni mese</span><span class="value">${fmt(mensile)}</span></div>
-                            <div class="row highlight"><span class="label">In tasca ogni mese</span><span class="value">${fmt(inTasca)}</span></div>
+                            <div class="row highlight"><span class="label">Da accantonare</span><span class="value">${fmt(mensile)}/mese</span></div>
                         </div>
+
+                        ${speseHtml}
 
                         ${data.scadenze && data.scadenze.length ? `
                         <h3>Le tue scadenze</h3>
@@ -609,6 +678,24 @@
         container.appendChild(div);
     };
 
+    // ── SPESE TOGGLE ────────────────────────
+
+    function setupSpeseToggle() {
+        const toggle = document.getElementById('w-spese-toggle');
+        const section = document.getElementById('spese-section');
+        if (!toggle || !section) return;
+
+        toggle.addEventListener('change', function() {
+            section.style.display = this.checked ? 'block' : 'none';
+            if (this.checked) updateSpesePreview();
+        });
+
+        // Listen to expense input changes
+        document.querySelectorAll('.spesa-input').forEach(input => {
+            input.addEventListener('input', () => updateSpesePreview());
+        });
+    }
+
     // ── INIT ─────────────────────────────────
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -620,6 +707,7 @@
             setupAtecoSearch();
             setupSlider();
             setupToggle();
+            setupSpeseToggle();
 
             // Global next/prev
             const btnNext = document.getElementById('btn-next');

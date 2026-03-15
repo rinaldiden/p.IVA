@@ -36,6 +36,7 @@ from agents.agent8_invoicing.numbering import prossimo_numero
 from agents.supervisor.persistence import SupervisorStore
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+app.secret_key = "fiscalai-dev-key-change-in-prod"
 store = SupervisorStore()
 
 
@@ -59,7 +60,6 @@ def _get_ana(pid: str) -> tuple[dict | None, dict | None]:
 
 
 def _profile_summary(pid: str) -> dict:
-    """Build a summary dict for a profile."""
     p = store.get_profile(pid)
     if not p:
         return {}
@@ -71,6 +71,31 @@ def _profile_summary(pid: str) -> dict:
         "ateco": ana.get("ateco_principale", ""),
         "gestione": ana.get("gestione_inps", ""),
     }
+
+
+def _build_profilo(pid: str, ana: dict) -> ProfiloContribuente:
+    return ProfiloContribuente(
+        contribuente_id=pid,
+        nome=ana.get("nome", ""),
+        cognome=ana.get("cognome", ""),
+        codice_fiscale=ana.get("codice_fiscale", ""),
+        comune_residenza=ana.get("comune_residenza", ""),
+        data_apertura_piva=date.fromisoformat(ana.get("data_apertura_piva", "2024-01-01")),
+        primo_anno=ana.get("primo_anno", True),
+        ateco_principale=ana.get("ateco_principale", "62.01.00"),
+        ateco_secondari=ana.get("ateco_secondari", []),
+        regime_agevolato=ana.get("regime_agevolato", True),
+        gestione_inps=ana.get("gestione_inps", "separata"),
+        riduzione_inps_35=ana.get("riduzione_inps_35", False),
+        rivalsa_inps_4=ana.get("rivalsa_inps_4", False),
+    )
+
+
+def _calc_spese_totali(profile: dict) -> tuple[float, float]:
+    """Return (totale_annuo, totale_mensile) from saved expenses."""
+    spese = profile.get("spese", [])
+    totale = sum(float(s.get("importo_annuo", 0)) for s in spese)
+    return totale, round(totale / 12, 2)
 
 
 # ─── LANDING ──────────────────────────────────────────
@@ -94,8 +119,6 @@ def wizard():
 def wizard_salva():
     form = request.form
     primo_anno = form.get("primo_anno") == "1"
-
-    # Map gestione from wizard
     gestione = form.get("gestione_inps", "separata")
 
     profilo = ProfiloContribuente(
@@ -108,7 +131,7 @@ def wizard_salva():
         primo_anno=primo_anno,
         ateco_principale=form.get("ateco_principale", "62.01.00"),
         ateco_secondari=[],
-        regime_agevolato=primo_anno,  # 5% if primo anno
+        regime_agevolato=primo_anno,
         gestione_inps=gestione,
         riduzione_inps_35=False,
         rivalsa_inps_4=form.get("rivalsa_inps_4") == "1",
@@ -136,7 +159,6 @@ def dashboard(pid):
     if not profile:
         return redirect(url_for("index"))
 
-    # Check if first visit (welcome)
     welcome = request.args.get("welcome") or (
         not profile.get("_visited_dashboard")
     )
@@ -144,12 +166,10 @@ def dashboard(pid):
         profile["_visited_dashboard"] = True
         store.save_profile(pid, profile)
 
-    # Fatture from profile (stored when emitted)
     fatture = profile.get("fatture", [])
     n_fatture = len(fatture)
     fatturato_anno = sum(float(f.get("ricavo_netto", 0)) for f in fatture)
 
-    # Simulation for accantonamento
     anno = date.today().year
     da_accantonare_mese = Decimal("0")
     scadenze = []
@@ -160,7 +180,7 @@ def dashboard(pid):
             ateco_p = ana.get("ateco_principale", "62.01.00")
             ricavi = {ateco_p: Decimal(str(fatturato_anno))}
             profilo_obj = _build_profilo(pid, ana)
-            sim = simulate(profilo=profilo_obj, ricavi_per_ateco=ricavi, anno_fiscale=2024)
+            sim = simulate(profilo=profilo_obj, ricavi_per_ateco=ricavi, anno_fiscale=2025)
             da_accantonare_mese = sim.rata_mensile_da_accantonare
             scadenze = [
                 {"data": s.data, "descrizione": s.descrizione, "importo": s.importo}
@@ -172,6 +192,13 @@ def dashboard(pid):
     if scadenze:
         prossima = scadenze[0]
 
+    # Spese
+    spese = profile.get("spese", [])
+    spese_anno, spese_mese = _calc_spese_totali(profile)
+    tasse_inps = float(da_accantonare_mese * 12)
+    netto_reale_anno = fatturato_anno - tasse_inps - spese_anno
+    netto_reale_mese = round(netto_reale_anno / 12, 2) if fatturato_anno > 0 else 0
+
     return render_template("dashboard.html",
                            pid=pid, ana=ana, welcome=welcome,
                            fatturato_anno=fatturato_anno,
@@ -180,7 +207,13 @@ def dashboard(pid):
                            n_fatture=n_fatture,
                            fatture=fatture[-10:],
                            scadenze=scadenze,
-                           anno=anno)
+                           anno=anno,
+                           spese=spese,
+                           spese_anno=spese_anno,
+                           spese_mese=spese_mese,
+                           netto_reale_anno=netto_reale_anno,
+                           netto_reale_mese=netto_reale_mese,
+                           tasse_inps_anno=tasse_inps)
 
 
 # ─── PROFILO ──────────────────────────────────────────
@@ -227,7 +260,6 @@ def simulazione(pid):
         profilo_obj = _build_profilo(pid, ana)
         sim_result = simulate(profilo=profilo_obj, ricavi_per_ateco=ricavi_input, anno_fiscale=anno)
 
-        # Validation
         a3_input = ContribuenteInput(
             contribuente_id=pid, anno_fiscale=anno,
             primo_anno=profilo_obj.primo_anno,
@@ -269,7 +301,6 @@ def simulazione(pid):
         )
         validation = validate(a3b_in, a3_out)
 
-        # F24 plan
         piano = genera_piano_annuale(
             contribuente_id=pid,
             contribuente_cf=profilo_obj.codice_fiscale,
@@ -304,15 +335,28 @@ def fattura(pid):
     xml_preview = None
 
     if request.method == "POST":
+        # Build client from form (handles both azienda and privato)
+        tipo_cliente = request.form.get("tipo_cliente", "azienda")
+        if tipo_cliente == "privato":
+            denominazione = f"{request.form.get('cliente_nome', '')} {request.form.get('cliente_cognome', '')}"
+            piva = ""
+            cf = request.form.get("cliente_cf", "")
+            sdi = "0000000"
+        else:
+            denominazione = request.form.get("cliente_denominazione", "")
+            piva = request.form.get("cliente_piva", "")
+            cf = request.form.get("cliente_cf", "")
+            sdi = request.form.get("cliente_sdi", "0000000")
+
         cliente = DatiCliente(
-            denominazione=request.form["cliente_denominazione"],
-            partita_iva=request.form.get("cliente_piva", ""),
-            codice_fiscale=request.form.get("cliente_cf", ""),
+            denominazione=denominazione,
+            partita_iva=piva,
+            codice_fiscale=cf,
             indirizzo=request.form.get("cliente_indirizzo", ""),
             cap=request.form.get("cliente_cap", ""),
             comune=request.form.get("cliente_comune", ""),
             provincia=request.form.get("cliente_provincia", ""),
-            codice_sdi=request.form.get("cliente_sdi", "0000000"),
+            codice_sdi=sdi,
         )
 
         linee = []
@@ -328,9 +372,11 @@ def fattura(pid):
                 linee.append(linea)
 
         if linee:
-            anno_fattura = int(request.form.get("anno_fattura", 2024))
+            anno_fattura = int(request.form.get("anno_fattura", date.today().year))
             numero = prossimo_numero(anno_fattura)
-            data_fattura = date.fromisoformat(request.form.get("data_fattura", str(date.today())))
+            data_fattura = date.fromisoformat(
+                request.form.get("data_fattura", str(date.today()))
+            )
 
             cedente_nome = f"{ana.get('nome', '')} {ana.get('cognome', '')}"
             f = crea_fattura(
@@ -348,7 +394,6 @@ def fattura(pid):
             xml_preview = xml_str[:3000]
             result = f
 
-            # Store fattura in profile
             if "fatture" not in profile:
                 profile["fatture"] = []
             profile["fatture"].append({
@@ -357,29 +402,62 @@ def fattura(pid):
                 "cliente": cliente.denominazione,
                 "importo": str(f.totale_documento),
                 "ricavo_netto": str(f.ricavo_netto),
+                "stato_sdi": "AT",
+                "xml": xml_str,
             })
             store.save_profile(pid, profile)
 
     return render_template("fattura.html", ana=ana, pid=pid,
-                           result=result, xml_str=xml_str, xml_preview=xml_preview)
+                           result=result, xml_str=xml_str, xml_preview=xml_preview,
+                           today=str(date.today()))
+
+
+# ─── STORICO FATTURE ──────────────────────────────────
+
+@app.route("/fatture/<pid>")
+def storico_fatture(pid):
+    profile, ana = _get_ana(pid)
+    if not profile:
+        return redirect(url_for("index"))
+    fatture = profile.get("fatture", [])
+    totale_importo = sum(float(f.get("importo", 0)) for f in fatture)
+    totale_netto = sum(float(f.get("ricavo_netto", 0)) for f in fatture)
+    return render_template("storico_fatture.html", pid=pid, ana=ana,
+                           fatture=fatture, totale_importo=totale_importo,
+                           totale_netto=totale_netto, anno=date.today().year)
+
+
+@app.route("/fattura/<pid>/xml/<int:idx>")
+def download_xml(pid, idx):
+    profile, _ = _get_ana(pid)
+    if not profile:
+        return redirect(url_for("index"))
+    fatture = profile.get("fatture", [])
+    if idx < 0 or idx >= len(fatture):
+        return redirect(url_for("storico_fatture", pid=pid))
+    xml = fatture[idx].get("xml", "")
+    numero = fatture[idx].get("numero", "fattura")
+    from flask import Response
+    return Response(
+        xml,
+        mimetype="application/xml",
+        headers={"Content-Disposition": f"attachment; filename={numero}.xml"},
+    )
 
 
 # ─── API ──────────────────────────────────────────────
 
 @app.route("/api/ateco")
 def api_ateco():
-    # Include gestione_inps in response
     return jsonify(ATECO_CODES)
 
 
 @app.route("/api/suggerisci-ateco")
 def api_suggerisci_ateco():
-    """Suggest ATECO codes based on text description."""
     query = request.args.get("q", "").strip().lower()
     if not query:
         return jsonify([])
 
-    # Local keyword matching (fast, no Claude needed)
     results = []
     query_words = [w for w in query.split() if len(w) >= 3]
     for code, info in ATECO_CODES.items():
@@ -388,13 +466,11 @@ def api_suggerisci_ateco():
         coeff = info["coefficient"]
         score = 0
 
-        # Full query match in keywords (highest priority)
         for kw in keywords:
             if query in kw or kw in query:
                 score += 20
                 break
 
-        # Word-level matching
         for word in query_words:
             if word in desc:
                 score += 10
@@ -402,7 +478,6 @@ def api_suggerisci_ateco():
                 if word in kw:
                     score += 8
                     break
-            # Prefix match (e.g. "fotograf" matches "fotografo")
             if len(word) >= 4:
                 prefix = word[:4]
                 if prefix in desc:
@@ -420,10 +495,8 @@ def api_suggerisci_ateco():
                 "score": score,
             })
 
-    # Sort by score
     results.sort(key=lambda x: x["score"], reverse=True)
 
-    # If no local matches, try Claude
     if not results:
         try:
             from agents.agent0_wizard.explainer import suggest_ateco
@@ -439,7 +512,6 @@ def api_suggerisci_ateco():
                 for s in suggestions
             ]
         except Exception:
-            # Fallback: return all codes
             results = [
                 {
                     "codice": code,
@@ -456,13 +528,12 @@ def api_suggerisci_ateco():
 
 @app.route("/api/simula")
 def api_simula():
-    """Quick simulation for the wizard slider."""
     try:
         ricavi = int(request.args.get("ricavi", 30000))
         ateco = request.args.get("ateco", "62.01.00")
         primo_anno = request.args.get("primo_anno", "true").lower() == "true"
+        gestione = request.args.get("gestione", "separata")
 
-        # Normalize ATECO (wizard may send short form)
         if ateco and len(ateco) <= 5 and ateco not in ATECO_CODES:
             for code in ATECO_CODES:
                 if code.startswith(ateco):
@@ -478,11 +549,11 @@ def api_simula():
             primo_anno=primo_anno,
             ateco_principale=ateco,
             regime_agevolato=primo_anno,
-            gestione_inps="separata",
+            gestione_inps=gestione,
         )
 
         ricavi_dict = {ateco: Decimal(str(ricavi))}
-        sim = simulate(profilo=profilo, ricavi_per_ateco=ricavi_dict, anno_fiscale=2024)
+        sim = simulate(profilo=profilo, ricavi_per_ateco=ricavi_dict, anno_fiscale=2025)
 
         scadenze = [
             {
@@ -505,25 +576,146 @@ def api_simula():
         return jsonify({"error": str(e)}), 400
 
 
-# ─── HELPERS ──────────────────────────────────────────
+@app.route("/api/spese/<pid>", methods=["GET"])
+def api_get_spese(pid):
+    profile, _ = _get_ana(pid)
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+    spese = profile.get("spese", [])
+    totale_anno = sum(float(s.get("importo_annuo", 0)) for s in spese)
+    return jsonify({"spese": spese, "totale_anno": totale_anno, "totale_mese": round(totale_anno / 12, 2)})
 
-def _build_profilo(pid: str, ana: dict) -> ProfiloContribuente:
-    """Build a ProfiloContribuente from stored anagrafica."""
-    return ProfiloContribuente(
-        contribuente_id=pid,
-        nome=ana.get("nome", ""),
-        cognome=ana.get("cognome", ""),
-        codice_fiscale=ana.get("codice_fiscale", ""),
-        comune_residenza=ana.get("comune_residenza", ""),
-        data_apertura_piva=date.fromisoformat(ana.get("data_apertura_piva", "2024-01-01")),
-        primo_anno=ana.get("primo_anno", True),
-        ateco_principale=ana.get("ateco_principale", "62.01.00"),
-        ateco_secondari=ana.get("ateco_secondari", []),
-        regime_agevolato=ana.get("regime_agevolato", True),
-        gestione_inps=ana.get("gestione_inps", "separata"),
-        riduzione_inps_35=ana.get("riduzione_inps_35", False),
-        rivalsa_inps_4=ana.get("rivalsa_inps_4", False),
-    )
+
+@app.route("/api/spese/<pid>", methods=["POST"])
+def api_save_spese(pid):
+    profile, ana = _get_ana(pid)
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    categoria = data.get("categoria", "")
+    importo_annuo = float(data.get("importo_annuo", 0))
+
+    if not categoria:
+        return jsonify({"error": "Missing categoria"}), 400
+
+    spese = profile.get("spese", [])
+
+    # Update existing or add new
+    found = False
+    for s in spese:
+        if s["categoria"] == categoria:
+            s["importo_annuo"] = importo_annuo
+            found = True
+            break
+    if not found:
+        spese.append({"categoria": categoria, "importo_annuo": importo_annuo})
+
+    profile["spese"] = spese
+    store.save_profile(pid, profile)
+
+    totale_anno = sum(float(s.get("importo_annuo", 0)) for s in spese)
+    return jsonify({"spese": spese, "totale_anno": totale_anno, "totale_mese": round(totale_anno / 12, 2)})
+
+
+@app.route("/api/spese/<pid>/delete", methods=["POST"])
+def api_delete_spesa(pid):
+    profile, _ = _get_ana(pid)
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    categoria = data.get("categoria", "")
+
+    spese = profile.get("spese", [])
+    profile["spese"] = [s for s in spese if s["categoria"] != categoria]
+    store.save_profile(pid, profile)
+
+    totale = sum(float(s.get("importo_annuo", 0)) for s in profile["spese"])
+    return jsonify({"spese": profile["spese"], "totale_anno": totale, "totale_mese": round(totale / 12, 2)})
+
+
+@app.route("/api/netto-reale/<pid>")
+def api_netto_reale(pid):
+    profile, ana = _get_ana(pid)
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+
+    fatture = profile.get("fatture", [])
+    fatturato = sum(float(f.get("ricavo_netto", 0)) for f in fatture)
+    spese_anno, spese_mese = _calc_spese_totali(profile)
+
+    tasse_inps = 0
+    if fatturato > 0:
+        try:
+            profilo_obj = _build_profilo(pid, ana)
+            ateco_p = ana.get("ateco_principale", "62.01.00")
+            sim = simulate(profilo=profilo_obj,
+                           ricavi_per_ateco={ateco_p: Decimal(str(fatturato))},
+                           anno_fiscale=2025)
+            tasse_inps = float(sim.imposta_sostitutiva + sim.contributo_inps)
+        except Exception:
+            pass
+
+    netto = fatturato - tasse_inps - spese_anno
+    return jsonify({
+        "fatturato_stimato": fatturato,
+        "tasse_inps": tasse_inps,
+        "totale_spese": spese_anno,
+        "netto_reale_anno": round(netto, 2),
+        "netto_reale_mese": round(netto / 12, 2) if fatturato > 0 else 0,
+    })
+
+
+@app.route("/api/lookup-piva")
+def api_lookup_piva():
+    piva = request.args.get("piva", "").strip()
+    if not piva or len(piva) != 11 or not piva.isdigit():
+        return jsonify({"trovata": False})
+
+    # Try VIES API (EU VAT validation, free, no auth)
+    try:
+        import urllib.request
+        url = f"https://ec.europa.eu/taxation_customs/vies/rest-api/ms/IT/vat/{piva}"
+        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+            if data.get("isValid"):
+                name = data.get("name", "")
+                addr = data.get("address", "")
+                return jsonify({
+                    "trovata": True,
+                    "ragione_sociale": name,
+                    "indirizzo": addr,
+                    "cap": "",
+                    "comune": "",
+                    "provincia": "",
+                    "codice_sdi": "0000000",
+                })
+    except Exception:
+        pass
+
+    # Fallback: vatcomply
+    try:
+        import urllib.request
+        url = f"https://api.vatcomply.com/vat?vat_number=IT{piva}"
+        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read())
+            if data.get("valid"):
+                return jsonify({
+                    "trovata": True,
+                    "ragione_sociale": data.get("name", ""),
+                    "indirizzo": data.get("address", ""),
+                    "cap": "",
+                    "comune": "",
+                    "provincia": "",
+                    "codice_sdi": "0000000",
+                })
+    except Exception:
+        pass
+
+    return jsonify({"trovata": False})
 
 
 # ─── MAIN ─────────────────────────────────────────────
