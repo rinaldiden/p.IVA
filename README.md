@@ -238,23 +238,36 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 
 ## Stato Implementazione
 
+> Ultimo aggiornamento: 2026-03-15 — branch `v2-fiscal-fixes`
+
 | Componente | Stato | Note |
 |---|---|---|
 | Vault | MVP ✅ | AES-256-GCM, policy per agente, audit trail, test integration |
-| Agent0 — Wizard | MVP ✅ | Onboarding 6 step, simulatore, explainer Claude, CLI |
+| Agent0 — Wizard | MVP ✅ | Onboarding 6 step, simulatore, explainer Claude, ATECO→gestione auto, spese toggle |
 | Agent3 — Calculator | MVP ✅ | Calcolo deterministico, multi-ATECO, F24, checksum |
 | Agent3b — Validator | MVP ✅ | Validazione indipendente, blocco su 1 cent divergenza |
+| Agent6 — Scheduler | MVP ✅ | Piano annuale F24, imposta sostitutiva saldo/acconti, INPS separata/artigiani/commercianti, compensazione crediti, 14 test |
+| Agent8 — Invoicing | MVP ✅ | FatturaPA XML, marca da bollo, rivalsa INPS 4%, numerazione progressiva, esiti SDI, 12 test |
 | Agent10 — NormativeWatcher | MVP ✅ | RSS GU, diff engine, scheduler, audit trail |
 | Shared Messaging | MVP ✅ | Redis Streams, publisher/consumer, supervisor listener |
-| Supervisor | Scheletro 🟡 | Solo persistenza profili, no orchestrazione |
-| Agent1 — Collector | Non iniziato ❌ | |
-| Agent2 — Categorizer | Non iniziato ❌ | |
-| Agent4 — Compliance | Non iniziato ❌ | |
-| Agent5 — Declaration | Non iniziato ❌ | |
-| Agent6 — Scheduler | MVP ✅ | Piano annuale F24, imposta sostitutiva saldo/acconti, INPS separata/artigiani/commercianti, compensazione crediti, 14 test |
-| Agent7 — Advisor | Non iniziato ❌ | |
-| Agent8 — Invoicing | MVP ✅ | FatturaPA XML, marca da bollo, rivalsa INPS 4%, numerazione progressiva, esiti SDI, 12 test |
-| Agent9 — Notifier | Non iniziato ❌ | |
+| Supervisor | Scheletro 🟡 | Persistenza profili flat, save_from_agent0, no orchestrazione |
+| Web App | MVP ✅ | Dashboard con sim live, gestione spese, fattura azienda/privato, lookup P.IVA VIES, storico fatture, stati SDI, download XML |
+| Shared Config | MVP ✅ | ATECO catalog con gestione_inps (74 codici), INPS rates 2024-2025 completi |
+| Agent1 — Collector | Stub 🟡 | Interfaccia definita, logica da implementare |
+| Agent2 — Categorizer | Stub 🟡 | Interfaccia definita, logica da implementare |
+| Agent4 — Compliance | Stub 🟡 | Interfaccia definita, logica da implementare |
+| Agent5 — Declaration | Stub 🟡 | Interfaccia definita, logica da implementare |
+| Agent7 — Advisor | Stub 🟡 | Interfaccia definita, logica da implementare |
+| Agent9 — Notifier | Stub 🟡 | Interfaccia definita, logica da implementare |
+
+### Cosa manca per andare in produzione
+
+- **Autenticazione utente** — login/registrazione con session Flask (secret_key impostata, mancano route login/logout e protezione endpoint)
+- **SDI reale** — attualmente mock; serve integrazione intermediario API (Aruba 25€/anno o A-Cube free tier consigliati)
+- **Database** — persistenza su file JSON, da migrare a PostgreSQL per multi-utente
+- **Test coverage** — 85 test passano; mancano test per route web, artigiani/commercianti in Agent0, edge case spese/fatture
+- **Implementazione agent stub** — Agent1,2,4,5,7,9 hanno solo interfaccia, logica business da scrivere
+- **Orchestrazione Supervisor** — il Supervisor salva profili ma non coordina ancora il flusso tra agenti
 
 ---
 
@@ -262,7 +275,7 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 
 FiscalAI è un sistema di supporto automatizzato per la gestione fiscale. **Non sostituisce la consulenza professionale certificata** di un commercialista o consulente fiscale abilitato. L'utente è responsabile della verifica finale dei dati e degli adempimenti fiscali. Il sistema è progettato per il regime forfettario italiano e non copre altri regimi fiscali.
 
-L'invio telematico delle dichiarazioni avviene esclusivamente tramite intermediario abilitato ai sensi dell'art. 3 del DPR 322/98.
+L'invio telematico delle dichiarazioni avviene esclusivamente tramite intermediario abilitato ai sensi dell'art. 3 del DPR 322/98. Per la fatturazione elettronica è sufficiente un canale accreditato SDI o un intermediario tecnologico (non serve abilitazione Entratel).
 
 ---
 
