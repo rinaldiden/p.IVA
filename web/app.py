@@ -380,18 +380,34 @@ def api_suggerisci_ateco():
 
     # Local keyword matching (fast, no Claude needed)
     results = []
+    query_words = [w for w in query.split() if len(w) >= 3]
     for code, info in ATECO_CODES.items():
         desc = info["description"].lower()
+        keywords = [k.lower() for k in info.get("keywords", [])]
         coeff = info["coefficient"]
-        # Simple relevance scoring
         score = 0
-        for word in query.split():
-            if len(word) < 3:
-                continue
+
+        # Full query match in keywords (highest priority)
+        for kw in keywords:
+            if query in kw or kw in query:
+                score += 20
+                break
+
+        # Word-level matching
+        for word in query_words:
             if word in desc:
                 score += 10
-            elif word[:4] in desc:
-                score += 5
+            for kw in keywords:
+                if word in kw:
+                    score += 8
+                    break
+            # Prefix match (e.g. "fotograf" matches "fotografo")
+            if len(word) >= 4:
+                prefix = word[:4]
+                if prefix in desc:
+                    score += 3
+                elif any(prefix in kw for kw in keywords):
+                    score += 3
 
         if score > 0:
             results.append({
