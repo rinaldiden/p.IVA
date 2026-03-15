@@ -370,6 +370,7 @@
                             <span class="label">Da accantonare</span>
                             <span class="value">${fmt(mensile)}/mese</span>
                         </div>
+                        <p style="font-size:13px;color:var(--text2);margin-top:8px;">Ogni mese metti da parte questa cifra (tasse + INPS diviso 12). Cos\u00EC quando arrivano le scadenze F24 hai gi\u00E0 tutto pronto, senza sorprese.</p>
                     </div>
                 `;
 
@@ -483,6 +484,7 @@
                             <div class="row"><span class="label">Contributi INPS</span><span class="value">${fmt(inps)}</span></div>
                             <hr class="divider">
                             <div class="row highlight"><span class="label">Da accantonare</span><span class="value">${fmt(mensile)}/mese</span></div>
+                            <p style="font-size:13px;color:var(--text2);margin-top:8px;">Questa è la cifra da mettere da parte ogni mese per coprire tasse e INPS. È il totale annuo (${fmt(imposta + inps)}) diviso 12 mesi.</p>
                         </div>
 
                         ${speseHtml}
