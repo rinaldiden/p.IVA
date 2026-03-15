@@ -368,6 +368,7 @@ def fattura(pid):
 
 @app.route("/api/ateco")
 def api_ateco():
+    # Include gestione_inps in response
     return jsonify(ATECO_CODES)
 
 
@@ -414,6 +415,7 @@ def api_suggerisci_ateco():
                 "codice": code,
                 "descrizione": info["description"],
                 "coefficiente": coeff,
+                "gestione_inps": info.get("gestione_inps", "separata"),
                 "motivazione": f"Coefficiente di redditivita: {int(float(coeff) * 100)}%",
                 "score": score,
             })
@@ -431,6 +433,7 @@ def api_suggerisci_ateco():
                     "codice": s.codice,
                     "descrizione": s.descrizione,
                     "coefficiente": str(s.coefficiente),
+                    "gestione_inps": ATECO_CODES.get(s.codice, {}).get("gestione_inps", "separata"),
                     "motivazione": s.motivazione,
                 }
                 for s in suggestions
@@ -442,6 +445,7 @@ def api_suggerisci_ateco():
                     "codice": code,
                     "descrizione": info["description"],
                     "coefficiente": info["coefficient"],
+                    "gestione_inps": info.get("gestione_inps", "separata"),
                     "motivazione": "",
                 }
                 for code, info in list(ATECO_CODES.items())[:5]

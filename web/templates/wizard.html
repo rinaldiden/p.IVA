@@ -9,9 +9,9 @@
     <div class="wizard-header">
         <div class="wizard-progress">
             <button class="back hidden">&larr; Indietro</button>
-            <span class="step-text">Step 1 di 7</span>
+            <span class="step-text">Step 1 di 6</span>
         </div>
-        <div class="progress-bar"><div class="fill" style="width:14.3%"></div></div>
+        <div class="progress-bar"><div class="fill" style="width:16.7%"></div></div>
     </div>
 
     <!-- Hidden form for final submit -->
@@ -61,6 +61,7 @@
         </div>
 
         <div id="ateco-suggestions"></div>
+        <div id="gestione-info" style="display:none;"></div>
 
         <p style="margin-top:16px;">
             <a href="javascript:void(0)" onclick="window._showAllAteco()">Non trovo la mia attivita &rarr;</a>
@@ -112,32 +113,8 @@
         <div id="sim-preview"></div>
     </div>
 
-    <!-- ═══ STEP 5 — Come lavori ═══ -->
+    <!-- ═══ STEP 5 — Rivalsa (solo gestione separata) ═══ -->
     <div class="step" data-step="5">
-        <h2>Come svolgi la tua attivita?</h2>
-        <p class="step-subtitle"></p>
-
-        <div class="choices choices-3" id="step5-choices">
-            <div class="choice" onclick="window._setGestione('separata', this)">
-                <div class="choice-emoji">&#x1F4BC;</div>
-                <div class="choice-title">Freelance o consulente</div>
-                <div class="choice-desc">Lavori con la testa: sviluppatore, designer, consulente, fotografo, copywriter, formatore...</div>
-            </div>
-            <div class="choice" onclick="window._setGestione('artigiani', this)">
-                <div class="choice-emoji">&#x1F527;</div>
-                <div class="choice-title">Artigiano</div>
-                <div class="choice-desc">Lavori con le mani: idraulico, elettricista, falegname, meccanico, parrucchiere...</div>
-            </div>
-            <div class="choice" onclick="window._setGestione('commercianti', this)">
-                <div class="choice-emoji">&#x1F6CD;</div>
-                <div class="choice-title">Commerciante</div>
-                <div class="choice-desc">Vendi prodotti: negozio fisico, e-commerce, mercato, ingrosso...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ═══ STEP 6 — Rivalsa (solo freelance) ═══ -->
-    <div class="step" data-step="6">
         <h2>Vuoi recuperare parte dei contributi dai clienti?</h2>
         <p class="step-subtitle"></p>
 
@@ -166,8 +143,8 @@
         </div>
     </div>
 
-    <!-- ═══ STEP 7 — Riepilogo ═══ -->
-    <div class="step" data-step="7">
+    <!-- ═══ STEP 6 — Riepilogo ═══ -->
+    <div class="step" data-step="6">
         <h2>Ecco tutto quello che ti aspetta</h2>
         <p class="step-subtitle"></p>
 

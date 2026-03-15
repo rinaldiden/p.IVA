@@ -65,6 +65,7 @@ def _build_scadenze(
         if sim.profilo.gestione_inps in ("artigiani", "commercianti"):
             trimestrale = _round(sim.contributo_inps / Decimal("4"))
             for data, desc in [
+                (f"{anno}-05-16", "INPS 1° trimestre"),
                 (f"{anno}-08-20", "INPS 2° trimestre"),
                 (f"{anno}-11-16", "INPS 3° trimestre"),
                 (f"{anno + 1}-02-16", "INPS 4° trimestre"),

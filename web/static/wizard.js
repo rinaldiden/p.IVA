@@ -5,7 +5,7 @@
 
     // ── STATE ────────────────────────────────
     let currentStep = 1;
-    let totalSteps = 7;
+    let totalSteps = 6;
     let wizardData = {};
 
     const STORAGE_KEY = 'fiscalai_wizard';
@@ -71,22 +71,22 @@
         if (!validateCurrentStep()) return;
         collectStepData();
 
-        // Skip step 6 (rivalsa) if not freelance
+        // Skip step 5 (rivalsa) if not gestione separata
         let next = currentStep + 1;
-        if (next === 6 && wizardData.gestione !== 'separata') {
-            next = 7;
+        if (next === 5 && wizardData.gestione !== 'separata') {
+            next = 6;
         }
 
         if (next <= totalSteps) {
             showStep(next);
-            if (next === 7) buildRiepilogo();
+            if (next === 6) buildRiepilogo();
         }
     }
 
     function prevStep() {
         let prev = currentStep - 1;
-        if (prev === 6 && wizardData.gestione !== 'separata') {
-            prev = 5;
+        if (prev === 5 && wizardData.gestione !== 'separata') {
+            prev = 4;
         }
         if (prev >= 1) showStep(prev);
     }
@@ -110,10 +110,8 @@
             case 4:
                 return true; // slider always has value
             case 5:
-                return !!wizardData.gestione;
-            case 6:
                 return true; // toggle always has value
-            case 7:
+            case 6:
                 return true;
             default:
                 return true;
@@ -146,10 +144,7 @@
             case 4:
                 wizardData.ricavi = parseInt(val('w-ricavi') || '30000');
                 break;
-            case 5:
-                // already set by choice click
-                break;
-            case 6: {
+            case 5: {
                 const toggle = document.getElementById('w-rivalsa');
                 wizardData.rivalsa = toggle ? toggle.checked : false;
                 break;
@@ -189,7 +184,7 @@
                 }
                 container.innerHTML = data.map((s, i) => `
                     <div class="suggestion${wizardData.ateco === s.codice ? ' selected' : ''}"
-                         onclick="window._selectAteco('${s.codice}', '${s.descrizione.replace(/'/g, "\\'")}', '${s.coefficiente}', this)">
+                         onclick="window._selectAteco('${s.codice}', '${s.descrizione.replace(/'/g, "\\'")}', '${s.coefficiente}', '${s.gestione_inps || 'separata'}', this)">
                         <div class="sug-info">
                             <div class="sug-title">${s.descrizione}</div>
                             <div class="sug-desc">${s.motivazione || ''}</div>
@@ -213,7 +208,7 @@
                             return;
                         }
                         container.innerHTML = matches.map(([code, info]) => `
-                            <div class="suggestion" onclick="window._selectAteco('${code}', '${info.description.replace(/'/g, "\\'")}', '${info.coefficient}', this)">
+                            <div class="suggestion" onclick="window._selectAteco('${code}', '${info.description.replace(/'/g, "\\'")}', '${info.coefficient}', '${info.gestione_inps || 'separata'}', this)">
                                 <div class="sug-info">
                                     <div class="sug-title">${info.description}</div>
                                     <div class="sug-coeff">Codice: ${code} — Coefficiente: ${Math.round(parseFloat(info.coefficient) * 100)}%</div>
@@ -225,12 +220,34 @@
             });
     }
 
-    window._selectAteco = function(codice, desc, coeff, el) {
+    window._selectAteco = function(codice, desc, coeff, gestione, el) {
         wizardData.ateco = codice;
         wizardData.ateco_desc = desc;
         wizardData.ateco_coeff = coeff;
+        wizardData.gestione = gestione || 'separata';
         document.querySelectorAll('#ateco-suggestions .suggestion').forEach(s => s.classList.remove('selected'));
         el.classList.add('selected');
+
+        // Show gestione info
+        const gestioneBox = document.getElementById('gestione-info');
+        if (gestioneBox) {
+            const labels = {
+                'separata': { icon: '\uD83D\uDCBC', title: 'Gestione Separata INPS', desc: 'Paghi i contributi in percentuale su quello che guadagni. Se guadagni zero, paghi zero.' },
+                'artigiani': { icon: '\uD83D\uDD27', title: 'Gestione Artigiani INPS', desc: 'Hai contributi fissi trimestrali (~4.200\u20AC/anno) da versare ogni 3 mesi, anche se non fatturi.' },
+                'commercianti': { icon: '\uD83D\uDED2', title: 'Gestione Commercianti INPS', desc: 'Hai contributi fissi trimestrali (~4.200\u20AC/anno) da versare ogni 3 mesi, anche se non fatturi.' },
+            };
+            const g = labels[wizardData.gestione] || labels['separata'];
+            const isFixed = wizardData.gestione !== 'separata';
+            gestioneBox.innerHTML = `
+                <div class="info-box ${isFixed ? 'yellow' : 'green'}" style="margin-top:16px;">
+                    <p style="font-weight:600;margin-bottom:4px;">${g.icon} ${g.title}</p>
+                    <p>${g.desc}</p>
+                    <p style="margin-top:8px;font-size:13px;color:var(--text2);">La gestione INPS dipende dal tipo di attivita — non si sceglie.</p>
+                </div>
+            `;
+            gestioneBox.style.display = 'block';
+        }
+
         updateNextButton();
     };
 
@@ -244,7 +261,7 @@
             .then(r => r.json())
             .then(all => {
                 container.innerHTML = Object.entries(all).map(([code, info]) => `
-                    <div class="suggestion" onclick="window._selectAteco('${code}', '${info.description.replace(/'/g, "\\'")}', '${info.coefficient}', this)">
+                    <div class="suggestion" onclick="window._selectAteco('${code}', '${info.description.replace(/'/g, "\\'")}', '${info.coefficient}', '${info.gestione_inps || 'separata'}', this)">
                         <div class="sug-info">
                             <div class="sug-title">${info.description}</div>
                             <div class="sug-coeff">Codice: ${code} — Coefficiente: ${Math.round(parseFloat(info.coefficient) * 100)}%</div>
@@ -264,19 +281,6 @@
 
         const box = document.getElementById('primo-anno-info');
         if (box) box.style.display = value ? 'block' : 'none';
-
-        updateNextButton();
-    };
-
-    // ── GESTIONE CHOICE ──────────────────────
-
-    window._setGestione = function(value, el) {
-        wizardData.gestione = value;
-        document.querySelectorAll('#step5-choices .choice').forEach(c => c.classList.remove('selected'));
-        el.classList.add('selected');
-
-        // Update total steps — skip rivalsa for non-freelance
-        totalSteps = value === 'separata' ? 7 : 7;
 
         updateNextButton();
     };
@@ -455,6 +459,7 @@
         setHidden('h-primo-anno', wizardData.primo_anno ? '1' : '0');
         setHidden('h-ricavi', wizardData.ricavi);
         setHidden('h-gestione', wizardData.gestione || 'separata');
+        // gestione is auto-determined from ATECO code, not user choice
         setHidden('h-rivalsa', wizardData.rivalsa ? '1' : '0');
 
         localStorage.removeItem(STORAGE_KEY);
