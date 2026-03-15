@@ -25,16 +25,16 @@
     <!-- STATS -->
     <div class="stats" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;">
         <div class="stat">
-            <div class="stat-value">{{ "{:,.0f}".format(fatturato_anno) }} &euro;</div>
+            <div class="stat-value">{{ "{:,.0f}".format(fatturato_base) }} &euro;{% if usa_stima %}*{% endif %}</div>
             <div class="stat-label">Fatturato {{ anno }}</div>
         </div>
         <div class="stat" title="Metti da parte questa cifra ogni mese: è il totale annuo di tasse + INPS diviso 12. Così alle scadenze F24 hai già tutto pronto.">
-            <div class="stat-value">{{ "{:,.0f}".format(da_accantonare_mese) }} &euro;</div>
+            <div class="stat-value">{{ "{:,.0f}".format(da_accantonare_mese) }} &euro;{% if usa_stima %}*{% endif %}</div>
             <div class="stat-label">Da accantonare / mese</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">tasse + INPS &divide; 12</div>
         </div>
         <div class="stat">
-            <div class="stat-value" style="color:var(--success);">{{ "{:,.0f}".format(netto_reale_mese) }} &euro;</div>
+            <div class="stat-value" style="color:var(--success);">{{ "{:,.0f}".format(netto_reale_mese) }} &euro;{% if usa_stima %}*{% endif %}</div>
             <div class="stat-label">Netto reale / mese</div>
         </div>
         <div class="stat">
@@ -46,6 +46,12 @@
             <div class="stat-label">Fatture emesse</div>
         </div>
     </div>
+
+    {% if usa_stima %}
+    <div style="font-size:13px;color:var(--text2);margin-top:-8px;margin-bottom:12px;padding:0 4px;">
+        * Stima basata sul fatturato ipotizzato di {{ "{:,.0f}".format(fatturato_base) }} &euro;. Si aggiorna automaticamente con le fatture emesse e l'andamento durante l'anno.
+    </div>
+    {% endif %}
 
     <!-- ACTIONS -->
     <div class="action-grid">

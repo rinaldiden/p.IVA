@@ -247,6 +247,15 @@ def wizard_salva():
         rivalsa_inps_4=form.get("rivalsa_inps_4") == "1",
     )
     store.save_from_agent0(asdict(profilo))
+
+    # Save estimated revenue from wizard for dashboard projection
+    ricavi_stimati = form.get("ricavi", "")
+    if ricavi_stimati:
+        p = store.get_profile(profilo.contribuente_id)
+        if p:
+            p["ricavi_stimati_annui"] = float(ricavi_stimati)
+            store.save_profile(profilo.contribuente_id, p)
+
     _link_profile_to_user(profilo.contribuente_id)
     return redirect(url_for("apertura", pid=profilo.contribuente_id))
 
@@ -283,15 +292,20 @@ def dashboard(pid):
     n_fatture = len(fatture)
     fatturato_anno = sum(float(f.get("ricavo_netto", 0)) for f in fatture)
 
+    # Use wizard estimate as fallback when no invoices yet
+    ricavi_stimati = profile.get("ricavi_stimati_annui", 0)
+    usa_stima = n_fatture == 0 and ricavi_stimati > 0
+    fatturato_base = ricavi_stimati if usa_stima else fatturato_anno
+
     anno = date.today().year
     da_accantonare_mese = Decimal("0")
     scadenze = []
     prossima = None
 
-    if fatturato_anno > 0 or n_fatture > 0:
+    if fatturato_base > 0:
         try:
             ateco_p = ana.get("ateco_principale", "62.01.00")
-            ricavi = {ateco_p: Decimal(str(fatturato_anno))}
+            ricavi = {ateco_p: Decimal(str(fatturato_base))}
             profilo_obj = _build_profilo(pid, ana)
             sim = simulate(profilo=profilo_obj, ricavi_per_ateco=ricavi, anno_fiscale=2025)
             da_accantonare_mese = sim.rata_mensile_da_accantonare
@@ -309,12 +323,14 @@ def dashboard(pid):
     spese = profile.get("spese", [])
     spese_anno, spese_mese = _calc_spese_totali(profile)
     tasse_inps = float(da_accantonare_mese * 12)
-    netto_reale_anno = fatturato_anno - tasse_inps - spese_anno
-    netto_reale_mese = round(netto_reale_anno / 12, 2) if fatturato_anno > 0 else 0
+    netto_reale_anno = fatturato_base - tasse_inps - spese_anno
+    netto_reale_mese = round(netto_reale_anno / 12, 2) if fatturato_base > 0 else 0
 
     return render_template("dashboard.html",
                            pid=pid, ana=ana, welcome=welcome,
                            fatturato_anno=fatturato_anno,
+                           fatturato_base=fatturato_base,
+                           usa_stima=usa_stima,
                            da_accantonare_mese=da_accantonare_mese,
                            prossima_scadenza=prossima,
                            n_fatture=n_fatture,
