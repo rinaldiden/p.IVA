@@ -10,18 +10,20 @@ Opens at http://127.0.0.1:5001
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import uuid
 from dataclasses import asdict
 from datetime import date
 from decimal import Decimal
+from functools import wraps
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_ROOT))
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 
 from agents.agent0_wizard.models import ProfiloContribuente
 from agents.agent0_wizard.simulator import simulate
@@ -38,6 +40,109 @@ from agents.supervisor.persistence import SupervisorStore
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "fiscalai-dev-key-change-in-prod"
 store = SupervisorStore()
+
+# ─── AUTH ────────────────────────────────────────────
+
+_USERS_FILE = _ROOT / "data" / "users.json"
+
+
+def _load_users() -> dict:
+    if _USERS_FILE.exists():
+        return json.loads(_USERS_FILE.read_text())
+    return {}
+
+
+def _save_users(users: dict) -> None:
+    _USERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _USERS_FILE.write_text(json.dumps(users, indent=2))
+
+
+def _hash_pw(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_email" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def _user_owns_profile(pid: str) -> bool:
+    """Check that logged-in user owns this profile."""
+    email = session.get("user_email", "")
+    users = _load_users()
+    user = users.get(email, {})
+    return pid in user.get("profiles", [])
+
+
+@app.route("/registrati", methods=["GET", "POST"])
+def registrati():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        nome = request.form.get("nome", "").strip()
+
+        if not email or not password or not nome:
+            flash("Compila tutti i campi.", "error")
+            return render_template("auth.html", mode="registrati")
+
+        users = _load_users()
+        if email in users:
+            flash("Email già registrata. Accedi.", "error")
+            return redirect(url_for("login"))
+
+        users[email] = {
+            "nome": nome,
+            "password": _hash_pw(password),
+            "profiles": [],
+        }
+        _save_users(users)
+        session["user_email"] = email
+        session["user_nome"] = nome
+        flash(f"Benvenuto {nome}!", "success")
+        return redirect(url_for("index"))
+
+    return render_template("auth.html", mode="registrati")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        users = _load_users()
+        user = users.get(email)
+        if not user or user["password"] != _hash_pw(password):
+            flash("Email o password errati.", "error")
+            return render_template("auth.html", mode="login")
+
+        session["user_email"] = email
+        session["user_nome"] = user.get("nome", "")
+        return redirect(url_for("index"))
+
+    return render_template("auth.html", mode="login")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+def _link_profile_to_user(pid: str) -> None:
+    """Associate a profile with the logged-in user."""
+    email = session.get("user_email", "")
+    if not email:
+        return
+    users = _load_users()
+    if email in users:
+        if pid not in users[email].get("profiles", []):
+            users[email].setdefault("profiles", []).append(pid)
+            _save_users(users)
 
 
 def _load_ateco() -> dict:
@@ -101,21 +206,26 @@ def _calc_spese_totali(profile: dict) -> tuple[float, float]:
 # ─── LANDING ──────────────────────────────────────────
 
 @app.route("/")
+@login_required
 def index():
-    profiles = store.list_profiles()
-    profile_data = [_profile_summary(pid) for pid in profiles]
+    email = session.get("user_email", "")
+    users = _load_users()
+    user_profiles = users.get(email, {}).get("profiles", [])
+    profile_data = [_profile_summary(pid) for pid in user_profiles]
     profile_data = [p for p in profile_data if p]
-    return render_template("landing.html", profiles=profile_data)
+    return render_template("landing.html", profiles=profile_data, user_nome=session.get("user_nome", ""))
 
 
 # ─── WIZARD ───────────────────────────────────────────
 
 @app.route("/wizard")
+@login_required
 def wizard():
     return render_template("wizard.html")
 
 
 @app.route("/wizard/salva", methods=["POST"])
+@login_required
 def wizard_salva():
     form = request.form
     primo_anno = form.get("primo_anno") == "1"
@@ -137,12 +247,14 @@ def wizard_salva():
         rivalsa_inps_4=form.get("rivalsa_inps_4") == "1",
     )
     store.save_from_agent0(asdict(profilo))
+    _link_profile_to_user(profilo.contribuente_id)
     return redirect(url_for("apertura", pid=profilo.contribuente_id))
 
 
 # ─── APERTURA ─────────────────────────────────────────
 
 @app.route("/apertura/<pid>")
+@login_required
 def apertura(pid):
     profile, ana = _get_ana(pid)
     if not profile:
@@ -154,6 +266,7 @@ def apertura(pid):
 # ─── DASHBOARD ────────────────────────────────────────
 
 @app.route("/dashboard/<pid>")
+@login_required
 def dashboard(pid):
     profile, ana = _get_ana(pid)
     if not profile:
@@ -219,6 +332,7 @@ def dashboard(pid):
 # ─── PROFILO ──────────────────────────────────────────
 
 @app.route("/profilo/<pid>")
+@login_required
 def profilo_detail(pid):
     profile, ana = _get_ana(pid)
     if not profile:
@@ -227,6 +341,7 @@ def profilo_detail(pid):
 
 
 @app.route("/profilo/<pid>/delete", methods=["POST"])
+@login_required
 def profilo_delete(pid):
     store.delete_profile(pid)
     return redirect(url_for("index"))
@@ -235,6 +350,7 @@ def profilo_delete(pid):
 # ─── SIMULAZIONE ──────────────────────────────────────
 
 @app.route("/simulazione/<pid>", methods=["GET", "POST"])
+@login_required
 def simulazione(pid):
     profile, ana = _get_ana(pid)
     if not profile:
@@ -325,6 +441,7 @@ def simulazione(pid):
 # ─── FATTURA ──────────────────────────────────────────
 
 @app.route("/fattura/<pid>", methods=["GET", "POST"])
+@login_required
 def fattura(pid):
     profile, ana = _get_ana(pid)
     if not profile:
@@ -415,6 +532,7 @@ def fattura(pid):
 # ─── STORICO FATTURE ──────────────────────────────────
 
 @app.route("/fatture/<pid>")
+@login_required
 def storico_fatture(pid):
     profile, ana = _get_ana(pid)
     if not profile:
@@ -428,6 +546,7 @@ def storico_fatture(pid):
 
 
 @app.route("/fattura/<pid>/xml/<int:idx>")
+@login_required
 def download_xml(pid, idx):
     profile, _ = _get_ana(pid)
     if not profile:

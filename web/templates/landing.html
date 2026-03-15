@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block title %}FiscalAI — Apri la tua P.IVA{% endblock %}
+{% block nav_right %}
+<div class="nav-links">
+    <span style="color:var(--text2);font-size:14px;">{{ user_nome }}</span>
+    <a href="/logout">Esci</a>
+</div>
+{% endblock %}
 
 {% block content %}
 <div class="hero">

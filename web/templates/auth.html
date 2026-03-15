@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == 'registrati' %}Registrati{% else %}Accedi{% endif %} — FiscalAI{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:60px auto;">
+    <h1 style="font-size:24px;font-weight:700;text-align:center;margin-bottom:8px;">
+        {% if mode == 'registrati' %}Crea il tuo account{% else %}Bentornato{% endif %}
+    </h1>
+    <p style="color:var(--text2);text-align:center;margin-bottom:24px;">
+        {% if mode == 'registrati' %}Inizia a gestire la tua P.IVA in autonomia.{% else %}Accedi per continuare.{% endif %}
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="info-box {% if category == 'error' %}yellow{% else %}green{% endif %}" style="margin-bottom:16px;">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <form method="POST">
+            {% if mode == 'registrati' %}
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" name="nome" required placeholder="Mario" autofocus>
+            </div>
+            {% endif %}
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required placeholder="mario@esempio.it" {% if mode == 'login' %}autofocus{% endif %}>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required placeholder="Almeno 6 caratteri" minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px;">
+                {% if mode == 'registrati' %}Registrati{% else %}Accedi{% endif %}
+            </button>
+        </form>
+    </div>
+
+    <p style="text-align:center;margin-top:16px;font-size:14px;color:var(--text2);">
+        {% if mode == 'registrati' %}
+            Hai gia un account? <a href="/login">Accedi</a>
+        {% else %}
+            Non hai un account? <a href="/registrati">Registrati gratis</a>
+        {% endif %}
+    </p>
+</div>
+{% endblock %}
