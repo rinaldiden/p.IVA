@@ -44,3 +44,4 @@ shared/normative_review_queue.jsonl
 htmlcov/
 test_reports/
 agents/agent8_invoicing/data/
+data/
