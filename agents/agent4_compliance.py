@@ -73,6 +73,40 @@ def proiezione_annuale(ricavi: float, mese_corrente: int) -> dict:
     }
 
 
+def controlla_proiezione(proiezione: dict) -> list[dict]:
+    """Alert basati sulla proiezione annuale, non solo sui ricavi attuali."""
+    alerts = []
+    proj = proiezione.get("proiezione_annuale", 0)
+    if proj <= 0:
+        return alerts
+
+    if proj >= 100000:
+        alerts.append({
+            "soglia": 100000, "livello": "emergency",
+            "messaggio": f"PROIEZIONE €{proj:,.0f} — rischio uscita IMMEDIATA dal forfettario con IVA retroattiva",
+            "tipo": "proiezione",
+        })
+    elif proj >= 95000:
+        alerts.append({
+            "soglia": 95000, "livello": "danger",
+            "messaggio": f"PROIEZIONE €{proj:,.0f} — pericolo superamento 100k, frena la fatturazione",
+            "tipo": "proiezione",
+        })
+    elif proj >= 85000:
+        alerts.append({
+            "soglia": 85000, "livello": "critical",
+            "messaggio": f"PROIEZIONE €{proj:,.0f} — rischio uscita dal forfettario dall'anno prossimo",
+            "tipo": "proiezione",
+        })
+    elif proj >= 80000:
+        alerts.append({
+            "soglia": 80000, "livello": "warning",
+            "messaggio": f"PROIEZIONE €{proj:,.0f} — ti avvicini alla soglia 85k, monitora",
+            "tipo": "proiezione",
+        })
+    return alerts
+
+
 def controlla_compliance(anno: int = None) -> dict:
     if anno is None:
         anno = date.today().year
@@ -85,6 +119,7 @@ def controlla_compliance(anno: int = None) -> dict:
     alert_soglie = controlla_soglie(ricavi)
     alert_bollo = controlla_bollo(fatture)
     proiezione = proiezione_annuale(ricavi, mese)
+    alert_proiezione = controlla_proiezione(proiezione)
 
     risultato = {
         "anno": anno,
@@ -92,8 +127,9 @@ def controlla_compliance(anno: int = None) -> dict:
         "num_fatture": len(fatture),
         "proiezione": proiezione,
         "alert_soglie": alert_soglie,
+        "alert_proiezione": alert_proiezione,
         "alert_bollo": alert_bollo,
-        "totale_alert": len(alert_soglie) + len(alert_bollo),
+        "totale_alert": len(alert_soglie) + len(alert_proiezione) + len(alert_bollo),
         "controllato_il": date.today().isoformat(),
     }
 
@@ -101,9 +137,10 @@ def controlla_compliance(anno: int = None) -> dict:
     with open(output, "w", encoding="utf-8") as f:
         json.dump(risultato, f, indent=2, ensure_ascii=False)
 
-    if alert_soglie:
-        top = alert_soglie[-1]
-        registra_evento(anno, "compliance_alert", f"Soglia {top['livello']}: {top['messaggio']}")
+    all_alerts = alert_soglie + alert_proiezione + alert_bollo
+    if all_alerts:
+        top = max(all_alerts, key=lambda a: ["info", "warning", "alert", "critical", "danger", "emergency"].index(a.get("livello", "info")))
+        registra_evento(anno, "compliance_alert", f"{top['livello']}: {top['messaggio']}")
         logger.warning("ALERT %s: %s (ricavi: €%.2f)", top["livello"], top["messaggio"], ricavi)
     else:
         logger.info("Compliance OK: ricavi €%.2f, proiezione €%.2f", ricavi, proiezione.get("proiezione_annuale", 0))

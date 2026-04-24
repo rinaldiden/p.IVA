@@ -122,9 +122,11 @@ def run_scenario(nome: str, profilo_update: dict, fatture: list):
     print(f"  Supera 85k: {'SI' if comp['proiezione'].get('supera_85k') else 'NO'}")
     print(f"  Alert: {comp['totale_alert']}")
     for a in comp.get("alert_soglie", []):
-        print(f"    [{a['livello']}] {a['messaggio']}")
+        print(f"    🔴 [{a['livello']}] {a['messaggio']}")
+    for a in comp.get("alert_proiezione", []):
+        print(f"    🟠 [{a['livello']}] {a['messaggio']}")
     for a in comp.get("alert_bollo", []):
-        print(f"    [{a['livello']}] {a['messaggio']}")
+        print(f"    🟡 [{a['livello']}] {a['messaggio']}")
 
     # 5. SCADENZARIO & F24
     stampa_sezione("5. SCADENZARIO & F24")
