@@ -2,7 +2,7 @@
 
 **Sistema multi-agente completamente autonomo per gestire il ciclo fiscale completo di un contribuente forfettario italiano.**
 
-Dalla apertura della P.IVA fino all'invio telematico della dichiarazione dei redditi.
+Dalla apertura della P.IVA fino all'invio telematico della dichiarazione dei redditi — e anche la chiusura, con tutti gli adempimenti post-cessazione.
 Zero commercialista. Zero intervento umano.
 
 ---
@@ -11,7 +11,7 @@ Zero commercialista. Zero intervento umano.
 
 Liberare i forfettari italiani dalla dipendenza dal commercialista.
 
-Il regime forfettario è il più semplice che esista: aliquota fissa, niente IVA, niente registri contabili obbligatori. Eppure milioni di persone pagano centinaia di euro l'anno per farsi dire quanto devono al fisco. FiscalAI automatizza tutto il ciclo — dall'apertura della partita IVA alla dichiarazione dei redditi — con un sistema di agenti che lavorano in autonomia, si controllano a vicenda e non sbagliano i calcoli.
+Il regime forfettario è il più semplice che esista: aliquota fissa, niente IVA, niente registri contabili obbligatori. Eppure milioni di persone pagano centinaia di euro l'anno per farsi dire quanto devono al fisco. FiscalAI automatizza tutto il ciclo — dall'apertura alla chiusura della partita IVA, inclusi gli adempimenti post-cessazione — con un sistema di agenti che lavorano in autonomia, si controllano a vicenda e non sbagliano i calcoli.
 
 ---
 
@@ -67,10 +67,10 @@ Il regime forfettario è il più semplice che esista: aliquota fissa, niente IVA
 ## Agenti
 
 ### Supervisor — Profilo Contribuente & Coordinamento
-Fonte di verità unica per tutti i dati del contribuente. Mantiene profilo completo, storico pluriennale (ricavi, imposte, dichiarazioni, F24 anno per anno), coordina il flusso tra agenti e archivia ogni documento generato.
+Fonte di verità unica per tutti i dati del contribuente. Mantiene profilo completo, storico pluriennale (ricavi, imposte, dichiarazioni, F24 anno per anno), coordina il flusso tra agenti e archivia ogni documento generato. Gestisce il ciclo di vita della P.IVA con stati: attiva → in_chiusura → cessata_adempimenti_pendenti → cessata_completata.
 
-### Agent0 — Wizard & Bootstrap
-Guida l'utente nell'ottenimento della firma digitale (Camera di Commercio, SPID, provider certificato) e poi incamera le credenziali per uso automatico. Apre la P.IVA tramite intermediario abilitato, iscrive alla CCIAA/INPS, configura banca PSD2 e canali documenti. Gestisce la richiesta annuale di riduzione contributiva 35%.
+### Agent0 — Wizard & Bootstrap (Apertura + Chiusura)
+Gestisce l'intero ciclo di vita della P.IVA. **Apertura**: guida l'utente nell'ottenimento della firma digitale, apre la P.IVA tramite intermediario abilitato, iscrive alla CCIAA/INPS, configura banca PSD2 e canali documenti. Gestisce la richiesta annuale di riduzione contributiva 35%. **Chiusura**: esegue checklist pre-chiusura (fatture, saldi, crediti, bollo), trasmette AA9/12 cessazione, cancella CCIAA/INPS, revoca PSD2/SDI. Il sistema resta attivo in modalità post-cessazione fino al completamento della dichiarazione finale e dei saldi l'anno successivo.
 
 ### Agent1 — Collector
 Aggrega flussi da quattro canali: SDI (fatture elettroniche passive XML), banca PSD2 (polling movimenti), OCR Subagent (foto scontrini via app/email/Google Drive/Google Foto), cassetto previdenziale INPS (F24 precompilati con causali corrette). Input continuo, non solo a fine anno.
@@ -184,7 +184,7 @@ Ogni cartella agente contiene un file `AGENT.md` con responsabilità, input, out
 
 ## Roadmap
 
-1. **Agent0 MVP** — Wizard che guida l'apertura P.IVA, stima imposte, spiega il regime
+1. **Agent0 MVP** — Wizard che guida apertura e chiusura P.IVA, stima imposte, spiega il regime, gestisce adempimenti post-cessazione
 2. **Supervisor** — Profilo contribuente, storico pluriennale, crediti d'imposta
 3. **Agent1 + Agent2** — Collector (SDI + PSD2 + INPS cassetto) e categorizzazione automatica
 4. **Agent3 + Agent3b** — Calcolo LLM-assisted + validazione deterministica

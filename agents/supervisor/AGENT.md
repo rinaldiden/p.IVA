@@ -8,12 +8,18 @@
 - Tiene traccia dello stato corrente del ciclo fiscale annuale
 - Archivia ogni documento generato (F24, dichiarazioni, ricevute)
 - Espone i dati agli altri agenti in modo strutturato
+- Gestisce il **ciclo di vita completo** della P.IVA inclusa la cessazione:
+  - Stato "in_chiusura": checklist pre-chiusura in corso
+  - Stato "cessata_adempimenti_pendenti": P.IVA chiusa, ma dichiarazione finale e saldi da completare l'anno successivo
+  - Stato "cessata_completata": tutti gli adempimenti post-chiusura completati, sistema disattivabile
+- Mantiene lo **scadenzario post-cessazione** attivo fino al completamento di tutti gli adempimenti residui
 
 ## Profilo Contribuente (schema)
 ```
 {
   "anagrafica": { nome, cognome, cf, residenza, ... },
-  "piva": { numero, data_apertura, ateco, coefficiente_redditivita },
+  "piva": { numero, data_apertura, data_cessazione, stato, ateco, coefficiente_redditivita },
+  // stato: "attiva" | "in_chiusura" | "cessata_adempimenti_pendenti" | "cessata_completata"
   "regime": { tipo, aliquota, anno_inizio, riduzione_contributiva_35 },
   "inps": { gestione, tipo_iscrizione, minimale_annuo },
   "firma_digitale": { provider, credenziali_encrypted, scadenza },
@@ -39,6 +45,18 @@
   "fatture_emesse": [ { numero, data, cliente, importo, bollo_virtuale, stato_sdi, ricevuta } ],
   "bollo_virtuale": { totale_annuo, versamenti_trimestrali: [ { trimestre, importo, codice_tributo, pagato } ] },
   "crediti_imposta": { residuo_anno_precedente, utilizzato_in_compensazione, residuo_fine_anno },
+  "cessazione": {
+    "data_cessazione": null,
+    "motivo": null,
+    "checklist_pre_chiusura": { fatture_chiuse, saldi_calcolati, crediti_gestiti, bollo_versato, conferma_utente },
+    "adempimenti_post_chiusura": {
+      "dichiarazione_finale": { dovuta, inviata, data_invio },
+      "saldo_imposta": { importo, pagato, data_pagamento },
+      "saldo_inps": { importo, pagato, data_pagamento },
+      "saldo_bollo_virtuale": { importo, pagato, data_pagamento }
+    },
+    "completata": false
+  },
   "eventi": [ { data, tipo, descrizione } ]
 }
 ```
