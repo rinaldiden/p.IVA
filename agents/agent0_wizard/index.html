@@ -803,18 +803,126 @@ function updateConfirmBtn() {
 }
 
 function apriPIVA() {
+  const g = id => (document.getElementById(id).value || '');
+  const card = document.getElementById('step5');
+  card.innerHTML = `
+    <div class="step-title">Ci siamo quasi</div>
+    <div class="step-subtitle">Completa questi prerequisiti e poi apri la P.IVA in 5 minuti.</div>
+
+    <div class="summary-section">
+      <h3>Step 1 — PEC (2 minuti, €5/anno)</h3>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:12px">
+        La PEC e' obbligatoria per aprire P.IVA. Scegli un provider e apri la casella.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <a href="https://www.pec.it/acquista-pec.aspx" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Aruba PEC — €5/anno</a>
+        <a href="https://www.register.it/pec/" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Register.it — €5/anno</a>
+        <a href="https://www.legalmail.it/" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Legalmail — €6/anno</a>
+      </div>
+      <div class="field" style="margin-top:16px">
+        <label>La tua PEC (quando l'hai aperta)</label>
+        <input type="email" id="pec" placeholder="tuonome@pec.it" style="font-family:'JetBrains Mono',monospace">
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Step 2 — SPID (10 minuti, gratis)</h3>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:12px">
+        Serve per accedere al sito dell'Agenzia delle Entrate. Si fa una volta sola.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <a href="https://posteid.poste.it/" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Poste ID — Gratis</a>
+        <a href="https://guide.pec.it/spid/richiesta-spid.aspx" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Aruba SPID — Gratis</a>
+        <a href="https://www.namirial.it/spid/" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Namirial — €15</a>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <h3>Step 3 — Apri la P.IVA (5 minuti)</h3>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:16px">
+        Con SPID e PEC, vai sul sito dell'Agenzia delle Entrate e compila il modello AA9/12.
+        FiscalAI ha precompilato tutto — copia i dati qui sotto.
+      </p>
+      <a href="https://www.agenziaentrate.gov.it/portale/schede/istanze/aa9_11-apertura-variazione-chiusura-pf/come-aprire-la-partita-iva" target="_blank" class="btn btn-primary" style="text-decoration:none;margin-bottom:20px">
+        Vai all'Agenzia delle Entrate →
+      </a>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:12px">
+        <h4 style="font-size:13px;color:var(--accent2);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px">Modello AA9/12 — Dati precompilati</h4>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);line-height:2.2">
+          <div><span style="color:var(--text3)">Tipo dichiarazione:</span> Inizio attivita</div>
+          <div><span style="color:var(--text3)">Codice Fiscale:</span> <strong>${g('cf').toUpperCase() || '(inserisci)'}</strong></div>
+          <div><span style="color:var(--text3)">Cognome Nome:</span> ${g('cognome')} ${g('nome')}</div>
+          <div><span style="color:var(--text3)">Nato a:</span> ${g('comuneNascita')} (${g('provNascita').toUpperCase()}) il ${g('dob')}</div>
+          <div><span style="color:var(--text3)">Residenza:</span> ${g('indirizzo')}</div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div><span style="color:var(--text3)">Codice ATECO:</span> <strong style="color:var(--accent3)">${selectedAteco.code}</strong></div>
+            <div><span style="color:var(--text3)">Descrizione:</span> ${document.getElementById('attivita').value || 'Sviluppo software, progettazione sistemi'}</div>
+            <div><span style="color:var(--text3)">Regime fiscale:</span> <strong>Forfettario (L. 190/2014)</strong></div>
+            <div><span style="color:var(--text3)">Aliquota:</span> <strong style="color:var(--green2)">${aliquota}%</strong> (primi 5 anni)</div>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div><span style="color:var(--text3)">Email:</span> ${g('email')}</div>
+            <div><span style="color:var(--text3)">Telefono:</span> ${g('telefono')}</div>
+            <div><span style="color:var(--text3)">PEC:</span> <span id="pecDisplay">(compila sopra)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-section" style="border-color:var(--green);background:rgba(16,185,129,0.05)">
+      <h3 style="color:var(--green2)">Step 4 — Hai il numero P.IVA?</h3>
+      <p style="color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:12px">
+        Quando ricevi il numero (1-2 giorni via PEC), inseriscilo qui. FiscalAI prende il controllo.
+      </p>
+      <div class="field">
+        <label>Numero P.IVA</label>
+        <input type="text" id="numeroPiva" placeholder="12345678901" maxlength="11" style="font-family:'JetBrains Mono',monospace;font-size:18px;text-align:center;letter-spacing:3px">
+      </div>
+      <button class="btn btn-success" style="margin-top:16px;width:100%" onclick="attivaFiscalAI()">
+        Attiva FiscalAI →
+      </button>
+    </div>
+  `;
+
+  // Aggiorna PEC display quando compilata
+  setTimeout(() => {
+    const pecInput = document.getElementById('pec');
+    if (pecInput) {
+      pecInput.addEventListener('input', () => {
+        const d = document.getElementById('pecDisplay');
+        if (d) d.textContent = pecInput.value || '(compila sopra)';
+      });
+    }
+  }, 100);
+}
+
+function attivaFiscalAI() {
+  const piva = document.getElementById('numeroPiva').value.trim();
+  if (!piva || piva.length !== 11) {
+    alert('Inserisci un numero di P.IVA valido (11 cifre)');
+    return;
+  }
   const card = document.getElementById('step5');
   card.innerHTML = `
     <div style="text-align:center;padding:48px 0">
-      <div style="font-size:64px;margin-bottom:16px">🚀</div>
-      <div class="step-title" style="margin-bottom:8px">Richiesta inviata!</div>
-      <p style="color:var(--text2);font-size:15px;max-width:400px;margin:0 auto;line-height:1.7">
-        I tuoi dati sono stati acquisiti.<br>
-        FiscalAI procedera con la compilazione del modello AA9/12 e l'invio telematico all'Agenzia delle Entrate.<br><br>
-        Riceverai una notifica appena la P.IVA sara attiva.
+      <div style="font-size:64px;margin-bottom:16px">🎉</div>
+      <div class="step-title" style="margin-bottom:8px">FiscalAI e' attivo!</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent3);margin:20px 0">
+        P.IVA ${piva}
+      </div>
+      <p style="color:var(--text2);font-size:15px;max-width:460px;margin:0 auto;line-height:1.7">
+        Il tuo profilo e' stato inizializzato.<br>
+        Da questo momento FiscalAI gestisce tutto:<br><br>
+        ✅ Fatturazione elettronica XML<br>
+        ✅ Calcolo imposte e contributi<br>
+        ✅ Scadenzario F24 con notifiche<br>
+        ✅ Compliance e alert soglie<br>
+        ✅ Dichiarazione dei redditi<br><br>
+        <strong>Non devi piu preoccuparti di nulla.</strong>
       </p>
-      <div style="margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent2)">
-        Tempo stimato: 1-2 giorni lavorativi
+      <div style="margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3)">
+        Zero commercialista. Zero burocrazia. Solo lavoro.
       </div>
     </div>
   `;
