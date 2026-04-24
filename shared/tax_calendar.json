@@ -28,35 +28,86 @@
     }
   ],
 
-  "inps_gestione_separata": [
-    {
-      "id": "saldo_inps_gs",
-      "description": "Saldo contributi INPS gestione separata anno precedente",
-      "date": "06-30",
-      "type": "payment",
-      "note": "Differibile al 30/07 con maggiorazione 0.40%"
+  "inps_gestione_separata": {
+    "_importi_2026": {
+      "aliquota_professionisti_senza_cassa": 0.2607,
+      "aliquota_collaboratori": 0.3372,
+      "minimale_annuo": 18808,
+      "massimale_annuo": 122295,
+      "note": "Per i forfettari la base imponibile è: ricavi × coefficiente redditività. I contributi sono interamente deducibili dal reddito imponibile (unica spesa deducibile nel forfettario)."
     },
-    {
-      "id": "primo_acconto_inps_gs",
-      "description": "Primo acconto contributi INPS gestione separata (40%)",
-      "date": "06-30",
-      "type": "payment"
-    },
-    {
-      "id": "secondo_acconto_inps_gs",
-      "description": "Secondo acconto contributi INPS gestione separata (60%)",
-      "date": "11-30",
-      "type": "payment"
-    }
-  ],
+    "scadenze": [
+      {
+        "id": "saldo_inps_gs",
+        "description": "Saldo contributi INPS gestione separata anno precedente",
+        "date": "06-30",
+        "type": "payment",
+        "note": "Differibile al 30/07 con maggiorazione 0.40%. Nel primo anno di attività non è dovuto (nessun anno precedente)."
+      },
+      {
+        "id": "primo_acconto_inps_gs",
+        "description": "Primo acconto contributi INPS gestione separata (40%)",
+        "date": "06-30",
+        "type": "payment",
+        "note": "Calcolato sul 100% dell'imposta dell'anno precedente. Nel primo anno non è dovuto."
+      },
+      {
+        "id": "secondo_acconto_inps_gs",
+        "description": "Secondo acconto contributi INPS gestione separata (60%)",
+        "date": "11-30",
+        "type": "payment",
+        "note": "Nel primo anno non è dovuto."
+      }
+    ]
+  },
 
   "inps_artigiani_commercianti": {
-    "_note": "I contributi fissi sono trimestrali. I contributi eccedenti seguono le scadenze dell'imposta sostitutiva.",
+    "_note": "I contributi fissi sono trimestrali. Ogni rata copre il trimestre precedente. I contributi eccedenti il minimale seguono le scadenze dell'imposta sostitutiva (saldo 30/06 + acconti).",
+    "_importi_2026": {
+      "minimale_annuo": 18808,
+      "aliquota_artigiani": 0.24,
+      "aliquota_commercianti": 0.2448,
+      "contributo_fisso_artigiani": 4521.36,
+      "contributo_fisso_commercianti": 4611.64,
+      "contributo_fisso_artigiani_ridotto_35": 2938.88,
+      "contributo_fisso_commercianti_ridotto_35": 2997.57,
+      "rata_trimestrale_artigiani": 1130.34,
+      "rata_trimestrale_artigiani_ridotta_35": 734.72,
+      "rata_trimestrale_commercianti": 1152.91,
+      "rata_trimestrale_commercianti_ridotta_35": 749.39,
+      "soglia_prima_fascia": 56224,
+      "aliquota_oltre_prima_fascia_artigiani": 0.25,
+      "aliquota_oltre_prima_fascia_commercianti": 0.2548,
+      "massimale_con_anzianita_pre_1996": 93707,
+      "massimale_senza_anzianita_pre_1996": 122295
+    },
     "fissi_trimestrali": [
-      { "id": "fisso_q1", "description": "Rata fissa trimestrale Q1", "date": "02-16", "type": "payment" },
-      { "id": "fisso_q2", "description": "Rata fissa trimestrale Q2", "date": "05-16", "type": "payment" },
-      { "id": "fisso_q3", "description": "Rata fissa trimestrale Q3", "date": "08-20", "type": "payment" },
-      { "id": "fisso_q4", "description": "Rata fissa trimestrale Q4", "date": "11-16", "type": "payment" }
+      {
+        "id": "fisso_q1",
+        "description": "Rata fissa trimestrale — periodo gen-mar",
+        "date": "05-16",
+        "type": "payment",
+        "note": "Se il 16 cade di sabato/domenica, slitta al primo giorno lavorativo successivo"
+      },
+      {
+        "id": "fisso_q2",
+        "description": "Rata fissa trimestrale — periodo apr-giu",
+        "date": "08-20",
+        "type": "payment"
+      },
+      {
+        "id": "fisso_q3",
+        "description": "Rata fissa trimestrale — periodo lug-set",
+        "date": "11-16",
+        "type": "payment"
+      },
+      {
+        "id": "fisso_q4",
+        "description": "Rata fissa trimestrale — periodo ott-dic",
+        "date": "02-16",
+        "type": "payment",
+        "note": "Scadenza anno successivo. Se il 16 cade di sabato/domenica, slitta al primo giorno lavorativo successivo"
+      }
     ],
     "eccedente_minimale": [
       { "id": "saldo_eccedente", "description": "Saldo contributi eccedenti anno precedente", "date": "06-30", "type": "payment" },
