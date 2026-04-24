@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiscalAI — Apri la tua P.IVA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#243049;
+  --surface:#151d2e;--surface2:#1c2940;--surface3:#243352;
+  --text:#e8ecf4;--text2:#94a3b8;--text3:#64748b;
+  --accent:#0ea5e9;--accent2:#06b6d4;--accent3:#22d3ee;
+  --green:#10b981;--green2:#34d399;
+  --amber:#f59e0b;--red:#ef4444;
+  --border:#1e293b;--border2:#334155;
+  --radius:12px;--radius2:16px;--radius3:24px;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(14,165,233,0.08),transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(6,182,212,0.05),transparent);
+}
+.noise{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.app{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:24px 20px 80px}
+
+/* Header */
+.header{text-align:center;padding:48px 0 40px;position:relative}
+.logo{
+  font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+  letter-spacing:3px;text-transform:uppercase;color:var(--accent);
+  margin-bottom:16px;display:inline-block;
+  background:linear-gradient(135deg,var(--accent),var(--accent3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.header h1{
+  font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,48px);
+  font-weight:800;line-height:1.1;margin-bottom:12px;
+  background:linear-gradient(135deg,#fff 0%,var(--text2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.header p{color:var(--text2);font-size:15px;max-width:480px;margin:0 auto;line-height:1.6}
+
+/* Progress */
+.progress{display:flex;align-items:center;gap:0;margin:0 auto 40px;max-width:560px;padding:0 8px}
+.progress-step{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;
+  position:relative;cursor:pointer;
+}
+.progress-dot{
+  width:36px;height:36px;border-radius:50%;
+  background:var(--surface2);border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+  color:var(--text3);transition:all 0.4s cubic-bezier(0.4,0,0.2,1);
+  position:relative;z-index:2;
+}
+.progress-step.active .progress-dot{
+  background:var(--accent);border-color:var(--accent);color:#fff;
+  box-shadow:0 0 20px rgba(14,165,233,0.4);
+}
+.progress-step.done .progress-dot{
+  background:var(--green);border-color:var(--green);color:#fff;
+}
+.progress-step.done .progress-dot::after{content:'✓';font-size:14px}
+.progress-step.done .progress-dot span{display:none}
+.progress-label{
+  font-size:11px;color:var(--text3);font-weight:500;
+  letter-spacing:0.5px;text-align:center;transition:color 0.3s;
+  white-space:nowrap;
+}
+.progress-step.active .progress-label{color:var(--accent)}
+.progress-step.done .progress-label{color:var(--green2)}
+.progress-line{
+  position:absolute;top:18px;left:calc(50% + 22px);right:calc(-50% + 22px);
+  height:2px;background:var(--border);z-index:1;
+}
+.progress-step:last-child .progress-line{display:none}
+.progress-line-fill{
+  height:100%;background:var(--green);width:0%;transition:width 0.5s ease;
+}
+.progress-step.done .progress-line-fill{width:100%}
+
+/* Cards */
+.step-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius3);padding:36px 32px;
+  display:none;animation:fadeSlideIn 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.step-card.active{display:block}
+@keyframes fadeSlideIn{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.step-title{
+  font-family:'Playfair Display',serif;font-size:28px;font-weight:800;
+  margin-bottom:6px;color:#fff;
+}
+.step-subtitle{color:var(--text2);font-size:14px;margin-bottom:32px;line-height:1.5}
+
+/* Form elements */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-grid .full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{
+  font-size:12px;font-weight:600;letter-spacing:0.5px;
+  text-transform:uppercase;color:var(--text2);
+}
+.field input,.field select,.field textarea{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:12px 14px;color:var(--text);
+  font-family:'DM Sans',sans-serif;font-size:14px;
+  transition:all 0.2s;outline:none;width:100%;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(14,165,233,0.15);
+}
+.field textarea{resize:vertical;min-height:80px}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3)}
+
+/* ATECO cards */
+.ateco-grid{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.ateco-card{
+  background:var(--bg2);border:2px solid var(--border);
+  border-radius:var(--radius2);padding:16px 18px;cursor:pointer;
+  transition:all 0.25s;display:flex;align-items:center;gap:14px;
+}
+.ateco-card:hover{border-color:var(--border2);background:var(--bg3)}
+.ateco-card.selected{border-color:var(--accent);background:rgba(14,165,233,0.08)}
+.ateco-card.selected .ateco-radio{background:var(--accent);border-color:var(--accent)}
+.ateco-card.selected .ateco-radio::after{content:'';width:8px;height:8px;background:#fff;border-radius:50%}
+.ateco-radio{
+  width:22px;height:22px;min-width:22px;border-radius:50%;border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+.ateco-info{flex:1}
+.ateco-code{
+  font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+  color:var(--accent3);margin-bottom:2px;
+}
+.ateco-desc{font-size:14px;color:var(--text);font-weight:500}
+.ateco-meta{font-size:12px;color:var(--text3);margin-top:4px}
+.ateco-badge{
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:20px;background:var(--bg);color:var(--accent2);
+  border:1px solid var(--border2);white-space:nowrap;
+}
+
+/* Checklist */
+.check-list{display:flex;flex-direction:column;gap:12px}
+.check-item{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:18px 16px;cursor:pointer;
+  transition:all 0.2s;
+}
+.check-item:hover{border-color:var(--border2)}
+.check-item.checked{border-color:var(--green);background:rgba(16,185,129,0.05)}
+.check-item.fail{border-color:var(--red);background:rgba(239,68,68,0.05)}
+.check-box{
+  width:24px;height:24px;min-width:24px;border-radius:7px;
+  border:2px solid var(--border2);display:flex;align-items:center;
+  justify-content:center;transition:all 0.2s;margin-top:1px;
+  font-size:13px;color:transparent;
+}
+.check-item.checked .check-box{background:var(--green);border-color:var(--green);color:#fff}
+.check-item.fail .check-box{background:var(--red);border-color:var(--red);color:#fff}
+.check-text h4{font-size:15px;font-weight:600;margin-bottom:4px}
+.check-text p{font-size:13px;color:var(--text2);line-height:1.5}
+
+.eligibility-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:12px 20px;border-radius:var(--radius);
+  font-weight:600;font-size:15px;margin-top:24px;
+}
+.eligibility-badge.ok{background:rgba(16,185,129,0.12);color:var(--green2);border:1px solid rgba(16,185,129,0.2)}
+.eligibility-badge.no{background:rgba(239,68,68,0.12);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+
+/* Simulation */
+.sim-slider-wrap{margin-bottom:32px}
+.sim-value{
+  font-family:'JetBrains Mono',monospace;font-size:42px;font-weight:700;
+  text-align:center;margin-bottom:4px;
+  background:linear-gradient(135deg,#fff,var(--accent3));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.sim-label{text-align:center;font-size:13px;color:var(--text3);margin-bottom:20px}
+input[type=range]{
+  -webkit-appearance:none;width:100%;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent) 0%,var(--accent) var(--val,50%),var(--border2) var(--val,50%));
+  outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
+  background:var(--accent);border:3px solid #fff;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+.sim-results{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;
+}
+.sim-box{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+}
+.sim-box.highlight{border-color:var(--accent);background:rgba(14,165,233,0.06)}
+.sim-box.green{border-color:var(--green);background:rgba(16,185,129,0.06)}
+.sim-box-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:6px}
+.sim-box-value{
+  font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:#fff;
+}
+.sim-box-value.accent{color:var(--accent3)}
+.sim-box-value.green{color:var(--green2)}
+.sim-box-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+/* Comparison table */
+.compare-title{
+  font-size:14px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);
+}
+.compare-table{width:100%;border-collapse:collapse;font-size:13px}
+.compare-table th{
+  text-align:left;padding:10px 12px;color:var(--text3);font-weight:600;
+  font-size:11px;text-transform:uppercase;letter-spacing:0.5px;
+  border-bottom:1px solid var(--border);
+}
+.compare-table td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+.compare-table td:not(:first-child){
+  font-family:'JetBrains Mono',monospace;font-size:13px;text-align:right;
+}
+.compare-table th:not(:first-child){text-align:right}
+.compare-table tr:last-child td{border-bottom:none;font-weight:700;color:#fff;padding-top:14px}
+.compare-table .winner{color:var(--green2)}
+.compare-table .loser{color:var(--text3)}
+
+/* Summary */
+.summary-section{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius2);padding:20px;margin-bottom:16px;
+}
+.summary-section h3{
+  font-size:13px;font-weight:700;text-transform:uppercase;
+  letter-spacing:1px;color:var(--accent2);margin-bottom:14px;
+}
+.summary-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border);
+}
+.summary-row:last-child{border-bottom:none}
+.summary-row .label{font-size:14px;color:var(--text2)}
+.summary-row .value{
+  font-family:'JetBrains Mono',monospace;font-size:14px;
+  font-weight:600;color:#fff;
+}
+.timeline{margin-top:24px}
+.timeline-item{
+  display:flex;gap:16px;padding-bottom:20px;position:relative;
+}
+.timeline-item::before{
+  content:'';position:absolute;left:13px;top:28px;bottom:0;
+  width:2px;background:var(--border);
+}
+.timeline-item:last-child::before{display:none}
+.timeline-dot{
+  width:28px;height:28px;min-width:28px;border-radius:50%;
+  background:var(--surface2);border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;z-index:1;
+}
+.timeline-content h4{font-size:14px;font-weight:600;margin-bottom:2px}
+.timeline-content p{font-size:13px;color:var(--text2);line-height:1.5}
+
+.confirm-check{
+  display:flex;align-items:center;gap:12px;
+  margin-top:24px;padding:16px;background:var(--bg3);
+  border-radius:var(--radius);cursor:pointer;
+}
+.confirm-check input{display:none}
+.confirm-check .cbox{
+  width:22px;height:22px;min-width:22px;border-radius:6px;
+  border:2px solid var(--border2);display:flex;align-items:center;
+  justify-content:center;transition:all 0.2s;font-size:12px;
+}
+.confirm-check input:checked+.cbox{background:var(--accent);border-color:var(--accent);color:#fff}
+.confirm-check span{font-size:14px;color:var(--text2)}
+
+/* Buttons */
+.btn-row{display:flex;justify-content:space-between;margin-top:32px;gap:12px}
+.btn{
+  padding:14px 28px;border-radius:var(--radius);border:none;
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:8px;
+}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--text3);color:var(--text)}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;
+  box-shadow:0 4px 15px rgba(14,165,233,0.3);
+}
+.btn-primary:hover{box-shadow:0 6px 25px rgba(14,165,233,0.45);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-success{
+  background:linear-gradient(135deg,var(--green),#059669);color:#fff;
+  box-shadow:0 4px 15px rgba(16,185,129,0.3);
+}
+.btn-success:hover{box-shadow:0 6px 25px rgba(16,185,129,0.45);transform:translateY(-1px)}
+
+/* Responsive */
+@media(max-width:600px){
+  .app{padding:16px 14px 60px}
+  .step-card{padding:24px 18px}
+  .form-grid{grid-template-columns:1fr}
+  .sim-results{grid-template-columns:1fr}
+  .sim-value{font-size:32px}
+  .progress-label{font-size:9px}
+  .progress-dot{width:30px;height:30px;font-size:11px}
+  .header{padding:32px 0 28px}
+  .btn-row{flex-direction:column-reverse}
+  .btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="app">
+
+<header class="header">
+  <div class="logo">FiscalAI</div>
+  <h1>Apri la tua P.IVA</h1>
+  <p>Il wizard che ti guida dall'inizio alla fine. Regime forfettario, zero burocrazia.</p>
+</header>
+
+<nav class="progress" id="progress">
+  <div class="progress-step active" data-step="1">
+    <div class="progress-dot"><span>1</span></div>
+    <div class="progress-label">Chi sei</div>
+    <div class="progress-line"><div class="progress-line-fill"></div></div>
+  </div>
+  <div class="progress-step" data-step="2">
+    <div class="progress-dot"><span>2</span></div>
+    <div class="progress-label">Cosa fai</div>
+    <div class="progress-line"><div class="progress-line-fill"></div></div>
+  </div>
+  <div class="progress-step" data-step="3">
+    <div class="progress-dot"><span>3</span></div>
+    <div class="progress-label">Requisiti</div>
+    <div class="progress-line"><div class="progress-line-fill"></div></div>
+  </div>
+  <div class="progress-step" data-step="4">
+    <div class="progress-dot"><span>4</span></div>
+    <div class="progress-label">Simulazione</div>
+    <div class="progress-line"><div class="progress-line-fill"></div></div>
+  </div>
+  <div class="progress-step" data-step="5">
+    <div class="progress-dot"><span>5</span></div>
+    <div class="progress-label">Riepilogo</div>
+  </div>
+</nav>
+
+<!-- STEP 1 -->
+<div class="step-card active" id="step1">
+  <div class="step-title">Chi sei</div>
+  <div class="step-subtitle">I tuoi dati anagrafici. Servono per il modello AA9/12 di apertura.</div>
+  <div class="form-grid">
+    <div class="field"><label>Nome</label><input type="text" id="nome" placeholder="Mario"></div>
+    <div class="field"><label>Cognome</label><input type="text" id="cognome" placeholder="Rossi"></div>
+    <div class="field full"><label>Codice Fiscale</label><input type="text" id="cf" placeholder="RSSMRA90A01H501Z" maxlength="16" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace"></div>
+    <div class="field"><label>Data di nascita</label><input type="date" id="dob"></div>
+    <div class="field"><label>Comune di nascita</label><input type="text" id="comuneNascita" placeholder="Roma"></div>
+    <div class="field"><label>Provincia</label><input type="text" id="provNascita" placeholder="RM" maxlength="2" style="text-transform:uppercase"></div>
+    <div class="field full"><label>Indirizzo di residenza</label><input type="text" id="indirizzo" placeholder="Via Roma 1, 00100 Roma (RM)"></div>
+    <div class="field"><label>Email</label><input type="email" id="email" placeholder="mario@example.com"></div>
+    <div class="field"><label>Telefono</label><input type="tel" id="telefono" placeholder="+39 333 1234567"></div>
+  </div>
+  <div class="btn-row">
+    <div></div>
+    <button class="btn btn-primary" onclick="goStep(2)">Avanti <span>→</span></button>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="step-card" id="step2">
+  <div class="step-title">Cosa fai</div>
+  <div class="step-subtitle">Descrivi la tua attivita e scegli il codice ATECO piu adatto.</div>
+  <div class="field full" style="margin-bottom:24px">
+    <label>Descrivi la tua attivita</label>
+    <textarea id="attivita" placeholder="Es: Sviluppo software per controllo motori, stampa 3D, progetto guida autonoma biciclette..."></textarea>
+  </div>
+
+  <label style="font-size:12px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--text2)">Codice ATECO principale</label>
+  <div class="ateco-grid" id="atecoGrid">
+    <div class="ateco-card selected" data-ateco="62.01.00" data-coeff="67" data-inps="gs" onclick="selectAteco(this)">
+      <div class="ateco-radio"><div></div></div>
+      <div class="ateco-info">
+        <div class="ateco-code">62.01.00</div>
+        <div class="ateco-desc">Produzione di software non connesso all'edizione</div>
+        <div class="ateco-meta">Sviluppo SW, app, firmware, sistemi embedded</div>
+      </div>
+      <div class="ateco-badge">67% · GS</div>
+    </div>
+    <div class="ateco-card" data-ateco="62.09.09" data-coeff="67" data-inps="gs" onclick="selectAteco(this)">
+      <div class="ateco-radio"></div>
+      <div class="ateco-info">
+        <div class="ateco-code">62.09.09</div>
+        <div class="ateco-desc">Altre attivita dei servizi connessi alle IT</div>
+        <div class="ateco-meta">Consulenza IT, integrazione sistemi, IoT</div>
+      </div>
+      <div class="ateco-badge">67% · GS</div>
+    </div>
+    <div class="ateco-card" data-ateco="72.19.09" data-coeff="78" data-inps="gs" onclick="selectAteco(this)">
+      <div class="ateco-radio"></div>
+      <div class="ateco-info">
+        <div class="ateco-code">72.19.09</div>
+        <div class="ateco-desc">Ricerca e sviluppo sperimentale</div>
+        <div class="ateco-meta">R&D, prototipazione, guida autonoma, robotica</div>
+      </div>
+      <div class="ateco-badge">78% · GS</div>
+    </div>
+    <div class="ateco-card" data-ateco="43.21.02" data-coeff="86" data-inps="art" onclick="selectAteco(this)">
+      <div class="ateco-radio"></div>
+      <div class="ateco-info">
+        <div class="ateco-code">43.21.02</div>
+        <div class="ateco-desc">Installazione impianti elettronici</div>
+        <div class="ateco-meta">Cablaggi, reti, installazione HW — richiede CCIAA</div>
+      </div>
+      <div class="ateco-badge">86% · Artigiani</div>
+    </div>
+    <div class="ateco-card" data-ateco="33.12.10" data-coeff="86" data-inps="art" onclick="selectAteco(this)">
+      <div class="ateco-radio"></div>
+      <div class="ateco-info">
+        <div class="ateco-code">33.12.10</div>
+        <div class="ateco-desc">Riparazione e manutenzione di macchine</div>
+        <div class="ateco-meta">Manutenzione meccanica, motori — richiede CCIAA</div>
+      </div>
+      <div class="ateco-badge">86% · Artigiani</div>
+    </div>
+  </div>
+
+  <div class="field full" style="margin-top:20px">
+    <label>Codice ATECO secondario (opzionale)</label>
+    <select id="atecoSecondario">
+      <option value="">— Nessuno —</option>
+      <option value="62.09.09">62.09.09 — Servizi IT</option>
+      <option value="72.19.09">72.19.09 — Ricerca e sviluppo</option>
+      <option value="74.10.29">74.10.29 — Altre attivita di design</option>
+      <option value="33.12.10">33.12.10 — Riparazione macchine</option>
+    </select>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goStep(1)"><span>←</span> Indietro</button>
+    <button class="btn btn-primary" onclick="goStep(3)">Avanti <span>→</span></button>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="step-card" id="step3">
+  <div class="step-title">Requisiti 5%</div>
+  <div class="step-subtitle">Verifichiamo se hai diritto all'aliquota agevolata al 5% per i primi 5 anni.</div>
+
+  <div class="check-list" id="checkList">
+    <div class="check-item" data-q="q1" data-good="no" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <div class="check-text">
+        <h4>Hai avuto una P.IVA nei 3 anni precedenti?</h4>
+        <p>Se hai avuto una partita IVA (anche diversa) aperta nei 3 anni prima dell'apertura, non puoi accedere al 5%.</p>
+      </div>
+    </div>
+    <div class="check-item" data-q="q2" data-good="no" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <div class="check-text">
+        <h4>Eri dipendente e facevi la stessa attivita?</h4>
+        <p>Se l'attivita che vuoi aprire e la stessa che facevi come dipendente, non puoi avere il 5% (mera prosecuzione).</p>
+      </div>
+    </div>
+    <div class="check-item" data-q="q3" data-good="no" onclick="toggleCheck(this)">
+      <div class="check-box">✓</div>
+      <div class="check-text">
+        <h4>Stai proseguendo l'attivita di un altro soggetto?</h4>
+        <p>Se rilevi un'attivita da un familiare o da un'azienda che faceva la stessa cosa, non e considerata "nuova".</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="eligibilityResult"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goStep(2)"><span>←</span> Indietro</button>
+    <button class="btn btn-primary" onclick="goStep(4)">Avanti <span>→</span></button>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div class="step-card" id="step4">
+  <div class="step-title">Simulazione fiscale</div>
+  <div class="step-subtitle">Muovi il cursore per vedere quanto paghi e quanto tieni.</div>
+
+  <div class="sim-slider-wrap">
+    <div class="sim-value" id="simFatturato">€40.000</div>
+    <div class="sim-label">Fatturato annuo stimato</div>
+    <input type="range" id="simSlider" min="0" max="85000" step="1000" value="40000" oninput="updateSim()">
+  </div>
+
+  <div class="sim-results" id="simResults">
+    <div class="sim-box">
+      <div class="sim-box-label">Reddito imponibile</div>
+      <div class="sim-box-value" id="simReddito">€26.800</div>
+      <div class="sim-box-sub" id="simRedditoDetail">€40.000 × 67%</div>
+    </div>
+    <div class="sim-box">
+      <div class="sim-box-label">INPS Gestione Separata</div>
+      <div class="sim-box-value" id="simINPS">€6.987</div>
+      <div class="sim-box-sub">26,07%</div>
+    </div>
+    <div class="sim-box highlight">
+      <div class="sim-box-label">Imposta sostitutiva</div>
+      <div class="sim-box-value accent" id="simImposta">€991</div>
+      <div class="sim-box-sub" id="simImpostaRate">5%</div>
+    </div>
+    <div class="sim-box">
+      <div class="sim-box-label">Totale tasse + contributi</div>
+      <div class="sim-box-value" id="simTotTasse">€7.978</div>
+      <div class="sim-box-sub" id="simAliquota">Aliquota eff. 19,9%</div>
+    </div>
+    <div class="sim-box green">
+      <div class="sim-box-label">Netto in tasca</div>
+      <div class="sim-box-value green" id="simNetto">€32.022</div>
+      <div class="sim-box-sub" id="simNettoPerc">80,1% del fatturato</div>
+    </div>
+    <div class="sim-box">
+      <div class="sim-box-label">Accantona al mese</div>
+      <div class="sim-box-value accent" id="simMensile">€665</div>
+      <div class="sim-box-sub">da mettere da parte</div>
+    </div>
+  </div>
+
+  <div class="compare-title">Confronto gestione INPS</div>
+  <table class="compare-table" id="compareTable">
+    <thead>
+      <tr><th></th><th>Gest. Separata</th><th>Artigiani (-35%)</th></tr>
+    </thead>
+    <tbody id="compareBody"></tbody>
+  </table>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goStep(3)"><span>←</span> Indietro</button>
+    <button class="btn btn-primary" onclick="goStep(5)">Avanti <span>→</span></button>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div class="step-card" id="step5">
+  <div class="step-title">Riepilogo</div>
+  <div class="step-subtitle">Controlla tutto prima di procedere.</div>
+
+  <div class="summary-section">
+    <h3>Dati anagrafici</h3>
+    <div id="summaryAna"></div>
+  </div>
+
+  <div class="summary-section">
+    <h3>Attivita e regime</h3>
+    <div id="summaryAtt"></div>
+  </div>
+
+  <div class="summary-section">
+    <h3>Simulazione fiscale</h3>
+    <div id="summaryFisc"></div>
+  </div>
+
+  <div class="summary-section">
+    <h3>Prossimi passi</h3>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-dot">1</div>
+        <div class="timeline-content">
+          <h4>Modello AA9/12</h4>
+          <p>Compilazione e invio telematico all'Agenzia delle Entrate per apertura P.IVA. Tempi: 1-2 giorni lavorativi.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">2</div>
+        <div class="timeline-content">
+          <h4>Iscrizione INPS</h4>
+          <p>Iscrizione alla Gestione Separata INPS (automatica con apertura P.IVA per professionisti senza cassa).</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">3</div>
+        <div class="timeline-content">
+          <h4>Configurazione SDI</h4>
+          <p>Attivazione codice destinatario per ricezione fatture elettroniche e registrazione canale di invio.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot">4</div>
+        <div class="timeline-content">
+          <h4>Sei operativo</h4>
+          <p>Puoi emettere la prima fattura. FiscalAI gestira tutto: fatturazione, scadenze, calcoli, dichiarazione.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <label class="confirm-check" id="confirmLabel">
+    <input type="checkbox" id="confirmCheck" onchange="updateConfirmBtn()">
+    <div class="cbox">✓</div>
+    <span>Confermo che i dati inseriti sono corretti e desidero procedere con l'apertura della P.IVA</span>
+  </label>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goStep(4)"><span>←</span> Indietro</button>
+    <button class="btn btn-success" id="btnApri" disabled onclick="apriPIVA()">Apri la P.IVA →</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+let currentStep = 1;
+let selectedAteco = { code: '62.01.00', coeff: 67, inps: 'gs' };
+let aliquota = 5;
+const checks = { q1: null, q2: null, q3: null };
+
+function goStep(n) {
+  if (n === currentStep) return;
+  document.getElementById('step' + currentStep).classList.remove('active');
+  document.getElementById('step' + n).classList.add('active');
+
+  document.querySelectorAll('.progress-step').forEach((el, i) => {
+    const stepNum = i + 1;
+    el.classList.remove('active', 'done');
+    if (stepNum < n) el.classList.add('done');
+    else if (stepNum === n) el.classList.add('active');
+  });
+
+  currentStep = n;
+  if (n === 4) updateSim();
+  if (n === 5) buildSummary();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectAteco(el) {
+  document.querySelectorAll('.ateco-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAteco = {
+    code: el.dataset.ateco,
+    coeff: parseInt(el.dataset.coeff),
+    inps: el.dataset.inps
+  };
+}
+
+function toggleCheck(el) {
+  const q = el.dataset.q;
+  const goodAnswer = el.dataset.good;
+  if (checks[q] === null) {
+    checks[q] = true;
+    el.classList.add(goodAnswer === 'no' ? 'fail' : 'checked');
+  } else if (checks[q] === true) {
+    checks[q] = false;
+    el.classList.remove('fail', 'checked');
+    el.classList.add(goodAnswer === 'no' ? 'checked' : 'fail');
+  } else {
+    checks[q] = null;
+    el.classList.remove('fail', 'checked');
+  }
+  updateEligibility();
+}
+
+function updateEligibility() {
+  const res = document.getElementById('eligibilityResult');
+  const allAnswered = Object.values(checks).every(v => v !== null);
+  if (!allAnswered) { res.innerHTML = ''; return; }
+
+  const anyYes = Object.entries(checks).some(([k, v]) => {
+    const el = document.querySelector(`[data-q="${k}"]`);
+    return (el.dataset.good === 'no' && v === true) || (el.dataset.good === 'yes' && v === false);
+  });
+
+  if (anyYes) {
+    aliquota = 15;
+    res.innerHTML = '<div class="eligibility-badge no">✗ Aliquota 15% — non hai i requisiti per il 5%</div>';
+  } else {
+    aliquota = 5;
+    res.innerHTML = '<div class="eligibility-badge ok">✓ Aliquota 5% — hai diritto al regime agevolato per 5 anni</div>';
+  }
+}
+
+function fmt(n) {
+  return '€' + Math.round(n).toLocaleString('it-IT');
+}
+
+function updateSim() {
+  const fatturato = parseInt(document.getElementById('simSlider').value);
+  const pct = (fatturato / 85000) * 100;
+  document.getElementById('simSlider').style.setProperty('--val', pct + '%');
+  document.getElementById('simFatturato').textContent = fmt(fatturato);
+
+  const coeff = selectedAteco.coeff / 100;
+  const reddito = fatturato * coeff;
+
+  // Gestione Separata
+  const inpsGS = reddito * 0.2607;
+  const redditoNetGS = reddito - 0; // primo anno, nessun INPS pagato deducibile
+  const impostaGS = redditoNetGS * (aliquota / 100);
+  const totTasseGS = inpsGS + impostaGS;
+  const nettoGS = fatturato - totTasseGS;
+
+  document.getElementById('simReddito').textContent = fmt(reddito);
+  document.getElementById('simRedditoDetail').textContent = fmt(fatturato) + ' × ' + selectedAteco.coeff + '%';
+  document.getElementById('simINPS').textContent = fmt(inpsGS);
+  document.getElementById('simImposta').textContent = fmt(impostaGS);
+  document.getElementById('simImpostaRate').textContent = aliquota + '%';
+  document.getElementById('simTotTasse').textContent = fmt(totTasseGS);
+  const aliqEff = fatturato > 0 ? ((totTasseGS / fatturato) * 100).toFixed(1) : '0.0';
+  document.getElementById('simAliquota').textContent = 'Aliquota eff. ' + aliqEff + '%';
+  document.getElementById('simNetto').textContent = fmt(nettoGS);
+  document.getElementById('simNettoPerc').textContent = (fatturato > 0 ? ((nettoGS / fatturato) * 100).toFixed(1) : '0.0') + '% del fatturato';
+  document.getElementById('simMensile').textContent = fmt(totTasseGS / 12);
+
+  // Artigiani 86%
+  const redditoArt = fatturato * 0.86;
+  const inpsFissi = 4521.36 * 0.65;
+  const inpsEcc = Math.max(0, redditoArt - 18808) * 0.24 * 0.65;
+  const inpsArt = inpsFissi + inpsEcc;
+  const inpsPaidY1Art = inpsFissi * 0.75; // 3 rate nel primo anno
+  const redditoNetArt = redditoArt - inpsPaidY1Art;
+  const impostaArt = redditoNetArt * (aliquota / 100);
+  const totTasseArt = inpsArt + impostaArt + 120;
+  const nettoArt = fatturato - totTasseArt;
+
+  const gsWins = nettoGS >= nettoArt;
+
+  const rows = [
+    ['Coefficiente', selectedAteco.coeff + '%', '86%'],
+    ['Reddito imponibile', fmt(reddito), fmt(redditoArt)],
+    ['INPS contributi', fmt(inpsGS), fmt(inpsArt)],
+    ['Imposta ' + aliquota + '%', fmt(impostaGS), fmt(impostaArt)],
+    ['CCIAA', '—', '€120'],
+    ['Totale tasse', fmt(totTasseGS), fmt(totTasseArt)],
+    ['<strong>Netto in tasca</strong>', '<strong>' + fmt(nettoGS) + '</strong>', '<strong>' + fmt(nettoArt) + '</strong>'],
+  ];
+
+  const tbody = document.getElementById('compareBody');
+  tbody.innerHTML = rows.map((r, i) => {
+    const isLast = i === rows.length - 1;
+    const c1class = isLast ? (gsWins ? 'winner' : 'loser') : '';
+    const c2class = isLast ? (!gsWins ? 'winner' : 'loser') : '';
+    return `<tr><td>${r[0]}</td><td class="${c1class}">${r[1]}</td><td class="${c2class}">${r[2]}</td></tr>`;
+  }).join('');
+}
+
+function buildSummary() {
+  const g = id => (document.getElementById(id).value || '—');
+
+  document.getElementById('summaryAna').innerHTML = [
+    ['Nome e Cognome', g('nome') + ' ' + g('cognome')],
+    ['Codice Fiscale', g('cf').toUpperCase()],
+    ['Data di nascita', g('dob')],
+    ['Comune di nascita', g('comuneNascita') + ' (' + g('provNascita').toUpperCase() + ')'],
+    ['Residenza', g('indirizzo')],
+    ['Email', g('email')],
+    ['Telefono', g('telefono')],
+  ].map(r => `<div class="summary-row"><span class="label">${r[0]}</span><span class="value">${r[1]}</span></div>`).join('');
+
+  const fatturato = parseInt(document.getElementById('simSlider').value);
+  const reddito = fatturato * (selectedAteco.coeff / 100);
+  const inps = reddito * 0.2607;
+  const imposta = reddito * (aliquota / 100);
+  const totale = inps + imposta;
+  const netto = fatturato - totale;
+
+  document.getElementById('summaryAtt').innerHTML = [
+    ['ATECO primario', selectedAteco.code],
+    ['Coefficiente redditivita', selectedAteco.coeff + '%'],
+    ['Gestione INPS', selectedAteco.inps === 'gs' ? 'Gestione Separata' : 'Artigiani/Commercianti'],
+    ['Aliquota imposta', aliquota + '% (primi 5 anni)'],
+    ['CCIAA richiesta', selectedAteco.inps === 'art' ? 'Si' : 'No'],
+  ].map(r => `<div class="summary-row"><span class="label">${r[0]}</span><span class="value">${r[1]}</span></div>`).join('');
+
+  document.getElementById('summaryFisc').innerHTML = [
+    ['Fatturato stimato', fmt(fatturato)],
+    ['Reddito imponibile', fmt(reddito)],
+    ['INPS annui', fmt(inps)],
+    ['Imposta sostitutiva', fmt(imposta)],
+    ['Totale tasse', fmt(totale)],
+    ['Netto in tasca', fmt(netto)],
+    ['Accantona/mese', fmt(totale / 12)],
+  ].map(r => `<div class="summary-row"><span class="label">${r[0]}</span><span class="value">${r[1]}</span></div>`).join('');
+}
+
+function updateConfirmBtn() {
+  document.getElementById('btnApri').disabled = !document.getElementById('confirmCheck').checked;
+}
+
+function apriPIVA() {
+  const card = document.getElementById('step5');
+  card.innerHTML = `
+    <div style="text-align:center;padding:48px 0">
+      <div style="font-size:64px;margin-bottom:16px">🚀</div>
+      <div class="step-title" style="margin-bottom:8px">Richiesta inviata!</div>
+      <p style="color:var(--text2);font-size:15px;max-width:400px;margin:0 auto;line-height:1.7">
+        I tuoi dati sono stati acquisiti.<br>
+        FiscalAI procedera con la compilazione del modello AA9/12 e l'invio telematico all'Agenzia delle Entrate.<br><br>
+        Riceverai una notifica appena la P.IVA sara attiva.
+      </p>
+      <div style="margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent2)">
+        Tempo stimato: 1-2 giorni lavorativi
+      </div>
+    </div>
+  `;
+}
+
+// Init
+updateSim();
+</script>
+</body>
+</html>
