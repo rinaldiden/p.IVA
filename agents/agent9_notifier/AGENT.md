@@ -9,13 +9,16 @@
 ## Input
 - Scadenze e importi da Agent6
 - Alert da Agent3b (divergenza calcoli)
-- Alert da Agent4 (soglie ricavi con spiegazione conseguenze)
+- Alert da Agent4 (soglie ricavi con spiegazione conseguenze, marca da bollo, bollo virtuale)
 - Raccomandazioni da Agent7
+- Richieste di conferma utente da Agent5 (pre-invio dichiarazione) e Agent8 (pre-invio fattura, pre-pagamento F24)
+- Alert errori da Agent8 (scarto SDI, fallimento pagamento PSD2)
 
 ## Output
 - SMS inviati via Twilio
 - Email inviate via SendGrid
 - Push notification via app mobile
+- Risposte di conferma/rifiuto utente verso Agent5 e Agent8
 - Log di tutte le notifiche inviate nel Supervisor
 
 ## Integrazioni

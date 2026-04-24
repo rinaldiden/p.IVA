@@ -14,11 +14,14 @@
 - Controllare cause ostative al regime forfettario
 - Verificare esclusioni: partecipazione in società, redditi da lavoro dipendente > 30k, fatturato prevalente verso ex datore di lavoro (ultimi 2 anni)
 - Se rileva rischio uscita dal regime, avvisare e attivare Agent7
+- Verificare che Agent8 applichi correttamente la **marca da bollo virtuale €2** su ogni fattura emessa con importo > €77.47
+- Monitorare il versamento trimestrale dell'imposta di bollo virtuale (codici tributo 2501-2504)
 
 ## Input
 - Contatore ricavi in tempo reale e trend da Agent2
 - Dati anagrafici e situazione contributiva dell'utente dal Supervisor
 - Normativa vigente sul regime forfettario
+- Log fatture emesse da Agent8 (per verifica marca da bollo)
 
 ## Output
 - Alert proattivi su soglie ricavi (70k, 80k, 84k, 85k, 95k, 100k)
@@ -26,6 +29,8 @@
 - Segnalazione cause ostative
 - Attivazione Agent7 in caso di rischio uscita dal regime
 - Spiegazione chiara e concreta delle conseguenze per l'utente
+- Alert se marca da bollo mancante su fattura > €77.47
+- Alert se versamento bollo virtuale trimestrale in scadenza/scaduto
 
 ## Integrazioni
 - `agents/agent7_advisor/` — Attivazione in caso di rischio

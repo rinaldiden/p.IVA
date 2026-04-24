@@ -90,6 +90,40 @@
     }
   ],
 
+  "bollo_virtuale_fatture": [
+    {
+      "id": "bollo_q1",
+      "description": "Versamento imposta di bollo fatture elettroniche - Q1",
+      "codice_tributo": "2501",
+      "date": "05-31",
+      "type": "payment",
+      "note": "Se importo < 5.000€, differibile al Q2"
+    },
+    {
+      "id": "bollo_q2",
+      "description": "Versamento imposta di bollo fatture elettroniche - Q2",
+      "codice_tributo": "2502",
+      "date": "09-30",
+      "type": "payment",
+      "note": "Se Q1+Q2 < 5.000€, differibile al Q3"
+    },
+    {
+      "id": "bollo_q3",
+      "description": "Versamento imposta di bollo fatture elettroniche - Q3",
+      "codice_tributo": "2503",
+      "date": "11-30",
+      "type": "payment"
+    },
+    {
+      "id": "bollo_q4",
+      "description": "Versamento imposta di bollo fatture elettroniche - Q4",
+      "codice_tributo": "2504",
+      "date": "02-28",
+      "type": "payment",
+      "note": "Scadenza anno successivo"
+    }
+  ],
+
   "maggiorazione_differimento": {
     "description": "Il versamento del 30/06 può essere differito al 30/07 con maggiorazione dello 0.40%",
     "percentuale": 0.40,

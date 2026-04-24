@@ -34,7 +34,11 @@
   "acconti_versati": [ { data, importo, codice_tributo } ],
   "saldo": { importo, data_versamento },
   "dichiarazione": { file, data_invio, ricevuta },
-  "f24_generati": [ { data, importo, codice_tributo, stato } ],
+  "f24_generati": [ { data, importo, codice_tributo, stato, quietanza } ],
+  "f24_pagati": [ { data, importo, codice_tributo, quietanza_psd2 } ],
+  "fatture_emesse": [ { numero, data, cliente, importo, bollo_virtuale, stato_sdi, ricevuta } ],
+  "bollo_virtuale": { totale_annuo, versamenti_trimestrali: [ { trimestre, importo, codice_tributo, pagato } ] },
+  "crediti_imposta": { residuo_anno_precedente, utilizzato_in_compensazione, residuo_fine_anno },
   "eventi": [ { data, tipo, descrizione } ]
 }
 ```
@@ -45,13 +49,23 @@
 - Calcoli validati da Agent3b
 - F24 da Agent6
 - Dichiarazioni da Agent5
+- Fatture emesse e quietanze F24 da Agent8
 - Alert e notifiche da Agent4, Agent7, Agent9
 
 ## Output
 - Profilo contribuente completo per qualsiasi agente che lo richieda
 - Storico pluriennale per calcolo acconti e analisi trend
+- Crediti d'imposta residui per compensazione in F24
 - Dashboard stato ciclo fiscale corrente
 - Audit trail completo di ogni operazione
+
+## Checkpoint di Conferma Utente
+Il Supervisor gestisce un sistema di conferma pre-invio configurabile:
+- **Dichiarazione**: sempre conferma manuale (Agent5 invia riepilogo via Agent9, attende OK)
+- **F24 > soglia**: conferma manuale (soglia configurabile dall'utente, default €500)
+- **F24 <= soglia**: auto-approvazione (configurabile)
+- **Fatture**: configurabile (auto/manuale per singola fattura)
+- Ogni conferma e relativo esito vengono loggati nell'audit trail
 
 ## Integrazioni
 - Tutti gli agenti leggono e scrivono nel Supervisor

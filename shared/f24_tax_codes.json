@@ -21,16 +21,28 @@
   },
 
   "inps_gestione_separata": {
-    "PXX": {
-      "description": "Contributi INPS gestione separata - ACCONTO",
+    "PXX_primo_acconto": {
+      "causale": "PXX",
+      "description": "Contributi INPS gestione separata - PRIMO ACCONTO (40%)",
       "sezione": "inps",
-      "note": "Il codice esatto varia, consultare cassetto previdenziale"
+      "note": "La causale esatta (P10, POC, ecc.) dipende dall'anno e dalla posizione contributiva. Il codice sede e la matricola INPS si recuperano dal cassetto previdenziale. Agent3b deve interrogare il cassetto INPS per determinare la causale corretta per l'anno in corso."
     },
-    "P10": {
-      "description": "Contributi INPS gestione separata - SALDO",
-      "sezione": "inps"
+    "PXX_secondo_acconto": {
+      "causale": "PXX",
+      "description": "Contributi INPS gestione separata - SECONDO ACCONTO (60%)",
+      "sezione": "inps",
+      "note": "Stessa causale del primo acconto. Non rateizzabile."
+    },
+    "PXX_saldo": {
+      "causale": "PXX",
+      "description": "Contributi INPS gestione separata - SALDO anno precedente",
+      "sezione": "inps",
+      "note": "La causale e i dati si recuperano dal cassetto previdenziale INPS. L'F24 precompilato INPS disponibile nel cassetto è la fonte autoritativa."
     }
   },
+
+  "_nota_inps_gestione_separata": "I contributi INPS gestione separata usano causale 'PXX' dove XX varia. L'F24 precompilato disponibile nel cassetto previdenziale INPS contiene i dati esatti (causale, codice sede, matricola, periodo). Agent1 deve fare polling del cassetto previdenziale per recuperare l'F24 precompilato INPS, che Agent6 integra nello scadenzario.",
+
 
   "inps_artigiani": {
     "AF": {
@@ -88,5 +100,31 @@
       "description": "Interessi sul ravvedimento - imposte sostitutive",
       "sezione": "erario"
     }
-  }
+  },
+
+  "bollo_virtuale_fatture_elettroniche": {
+    "2501": {
+      "description": "Imposta di bollo sulle fatture elettroniche - 1 trimestre",
+      "sezione": "erario",
+      "scadenza": "05-31"
+    },
+    "2502": {
+      "description": "Imposta di bollo sulle fatture elettroniche - 2 trimestre",
+      "sezione": "erario",
+      "scadenza": "09-30"
+    },
+    "2503": {
+      "description": "Imposta di bollo sulle fatture elettroniche - 3 trimestre",
+      "sezione": "erario",
+      "scadenza": "11-30"
+    },
+    "2504": {
+      "description": "Imposta di bollo sulle fatture elettroniche - 4 trimestre",
+      "sezione": "erario",
+      "scadenza": "02-28",
+      "note": "Scadenza anno successivo"
+    }
+  },
+
+  "_nota_bollo_virtuale": "Se l'importo dovuto per il Q1 non supera €5.000, il versamento può essere rinviato al Q2. Se Q1+Q2 non superano €5.000, il versamento può essere rinviato al Q3."
 }
