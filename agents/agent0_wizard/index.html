@@ -956,7 +956,8 @@ function apriPIVA() {
         </div>
       </div>
       <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-        <button class="btn btn-success" onclick="generaPdfAA9()">Scarica AA9/12 compilato (PDF) →</button>
+        <button class="btn btn-primary" onclick="generaFileTelematico()" style="background:linear-gradient(135deg,#059669,var(--green))">Scarica file per Fisconline →</button>
+        <button class="btn btn-success" onclick="generaPdfAA9()">Scarica PDF riepilogo →</button>
         <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/AA9_12+istruzioni_2024.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Istruzioni ufficiali</a>
         <span style="color:var(--border)">|</span>
         <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/Modello+aa9_AA9_12+modello.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Modello vuoto</a>
@@ -1214,6 +1215,166 @@ function demoMode() {
     const pivaEl = document.getElementById('numeroPiva');
     if (pivaEl) pivaEl.value = '04271990035';
   }, 200);
+}
+
+// =========================================================
+// GENERA FILE TELEMATICO AA9/12 (per Fisconline)
+// =========================================================
+function generaFileTelematico() {
+  const g = id => (document.getElementById(id)?.value || '').toUpperCase();
+  const RLEN = 3503;
+
+  function padAN(val, len) { return (val || '').toUpperCase().padEnd(len).substring(0, len); }
+  function padNU(val, len) { return String(val || 0).padStart(len, '0').substring(0, len); }
+  function dataGGMM(iso) {
+    if (!iso || iso.length < 10) return '00000000';
+    const p = iso.split('-');
+    return p[2] + p[1] + p[0];
+  }
+
+  const cf = g('cf');
+  const oggi = new Date().toISOString().split('T')[0];
+  const oggiGG = dataGGMM(oggi);
+  const dob = document.getElementById('dob')?.value || '';
+  const dobGG = dataGGMM(dob);
+  const pec = document.getElementById('pec')?.value?.toUpperCase() || '';
+  const tel = g('telefono').replace(/[^0-9]/g, '');
+  const indirizzo = g('indirizzo');
+
+  // Parsing indirizzo per estrarre CAP e comune
+  // Formato atteso: "VIA SAN CARLO 25, 23037 TIRANO (SO)" o simile
+  let via = indirizzo, cap = '00000', comune = '', prov = '';
+  const capMatch = indirizzo.match(/(\d{5})/);
+  if (capMatch) cap = capMatch[1];
+  const provMatch = indirizzo.match(/\(([A-Z]{2})\)/i);
+  if (provMatch) prov = provMatch[1].toUpperCase();
+  // Estrai comune: tra CAP e (PROV)
+  const comMatch = indirizzo.match(/\d{5}\s+([^(]+)/);
+  if (comMatch) comune = comMatch[1].trim();
+  // Estrai via: prima del CAP
+  const viaMatch = indirizzo.match(/^(.+?)[\s,]+\d{5}/);
+  if (viaMatch) via = viaMatch[1].trim();
+  if (!prov) prov = g('provNascita');
+  if (!comune) comune = g('comuneNascita');
+
+  const ateco = selectedAteco.code.replace(/\./g, '').padEnd(6).substring(0, 6);
+  const cognomeNome = g('cognome') + ' ' + g('nome');
+
+  // === RECORD A ===
+  let recA = new Array(RLEN).fill(' ');
+  recA[0] = 'A';
+  padNU(0, 6).split('').forEach((c, i) => recA[1+i] = c);
+  oggiGG.split('').forEach((c, i) => recA[7+i] = c);
+  'AT5VA'.split('').forEach((c, i) => recA[15+i] = c);
+  '00'.split('').forEach((c, i) => recA[20+i] = c);
+  padAN(cf, 16).split('').forEach((c, i) => recA[22+i] = c);
+  recA[3500] = 'F'; recA[3501] = '\r'; recA[3502] = '\n';
+
+  // === RECORD B ===
+  let recB = new Array(RLEN).fill(' ');
+  recB[0] = 'B';
+  padAN(cf, 16).split('').forEach((c, i) => recB[1+i] = c);
+  recB[17] = '1'; // tipo soggetto
+  recB[18] = '1'; // tipo dichiarazione = inizio
+  oggiGG.split('').forEach((c, i) => recB[19+i] = c); // data
+  padAN(cf, 16).split('').forEach((c, i) => recB[27+i] = c); // CF titolare
+  recB[43] = '0';
+  padNU(0, 11).split('').forEach((c, i) => recB[44+i] = c); // P.IVA vuota
+  recB[55] = '0'; recB[56] = '0';
+  padNU(0, 8).split('').forEach((c, i) => recB[57+i] = c);
+  '   '.split('').forEach((c, i) => recB[65+i] = c);
+  padNU(0, 9).split('').forEach((c, i) => recB[68+i] = c);
+  '  '.split('').forEach((c, i) => recB[77+i] = c);
+
+  // Quadro B
+  padAN(cognomeNome, 150).split('').forEach((c, i) => recB[79+i] = c); // campo 15
+  // Filler 16-22
+  for (let i = 229; i < 400; i++) recB[i] = i < 248 ? ' ' : (i < 253 ? '0' : ' ');
+
+  padAN(ateco, 6).split('').forEach((c, i) => recB[400+i] = c); // campo 23 ATECO
+  padNU(0, 11).split('').forEach((c, i) => recB[406+i] = c); // campo 24 vol affari = 0
+  recB[417] = '0'; // campo 25
+  padAN(prov, 2).split('').forEach((c, i) => recB[418+i] = c); // campo 26 prov
+  padNU(cap, 5).split('').forEach((c, i) => recB[420+i] = c); // campo 27 CAP
+  '    '.split('').forEach((c, i) => recB[425+i] = c); // campo 28 filler
+  padAN(comune, 30).split('').forEach((c, i) => recB[429+i] = c); // campo 29 comune
+  padAN(via, 35).split('').forEach((c, i) => recB[459+i] = c); // campo 30 indirizzo
+  recB[494] = '0'; // campo 31 scritture contabili
+  recB[495] = '2'; // campo 32 REGIME FORFETTARIO!
+  recB[496] = ' '; recB[497] = ' '; recB[498] = ' ';
+
+  // Campi 36-39 sito web etc
+  for (let i = 499; i < 751; i++) recB[i] = (i >= 624 && i < 625) || i === 750 ? '0' : ' ';
+  recB[624] = '0'; recB[750] = '0';
+
+  // Quadro C
+  padAN(prov, 2).split('').forEach((c, i) => recB[751+i] = c); // campo 40
+  padNU(cap, 5).split('').forEach((c, i) => recB[753+i] = c); // campo 41
+  '    '.split('').forEach((c, i) => recB[758+i] = c); // campo 42
+  padAN(comune, 30).split('').forEach((c, i) => recB[762+i] = c); // campo 43
+  padAN(via, 35).split('').forEach((c, i) => recB[792+i] = c); // campo 44
+  recB[827] = '0'; // campo 45
+
+  // Quadro D — vuoto
+  recB[828] = '0';
+  for (let i = 829; i < 867; i++) recB[i] = i < 847 ? ' ' : '0';
+
+  // Quadro E — vuoto
+  for (let i = 866; i < 946; i++) recB[i] = i < 868 ? ' ' : '0';
+
+  // Quadri compilati
+  recB[946] = 'A'; recB[947] = 'B'; recB[948] = 'C';
+  recB[949] = ' '; recB[950] = ' '; recB[951] = ' '; recB[952] = ' '; recB[953] = ' ';
+  recB[954] = 'I';
+  padNU(4, 3).split('').forEach((c, i) => recB[955+i] = c); // n. pagine
+  oggiGG.split('').forEach((c, i) => recB[958+i] = c); // data presentazione
+  padAN(cf, 16).split('').forEach((c, i) => recB[966+i] = c); // CF dichiarante
+  for (let i = 982; i < 1003; i++) recB[i] = ' ';
+  recB[1003] = '1'; // predisposta dal contribuente
+  oggiGG.split('').forEach((c, i) => recB[1004+i] = c);
+  padAN('FISCALAI', 16).split('').forEach((c, i) => recB[1012+i] = c);
+
+  // Quadro I
+  padAN(pec, 125).split('').forEach((c, i) => recB[1028+i] = c); // PEC
+  padAN(tel.substring(0, 4), 15).split('').forEach((c, i) => recB[1153+i] = c); // prefisso
+  padAN(tel.substring(4), 20).split('').forEach((c, i) => recB[1168+i] = c); // numero
+  for (let i = 1188; i < 1348; i++) recB[i] = ' '; // FAX + sito web
+  recB[1348] = 'P'; // titolarita
+  recB[1349] = 'F'; // catasto
+  for (let i = 1350; i < 1388; i++) recB[i] = ' '; // dati catastali
+  for (let i = 1388; i < 1410; i++) recB[i] = '0'; // volumi intracom
+  recB[1410] = '1'; // tipologia clientela
+  recB[1411] = '0'; // luogo pubblico
+  recB[1412] = '1'; // investimenti iniziali
+  for (let i = 1413; i < 1424; i++) recB[i] = '0';
+
+  recB[3500] = 'F'; recB[3501] = '\r'; recB[3502] = '\n';
+
+  // === RECORD Z ===
+  let recZ = new Array(RLEN).fill(' ');
+  recZ[0] = 'Z';
+  padNU(1, 9).split('').forEach((c, i) => recZ[15+i] = c);
+  recZ[3500] = 'F'; recZ[3501] = '\r'; recZ[3502] = '\n';
+
+  // Componi file
+  const file = recA.join('') + recB.join('') + recZ.join('');
+
+  // Download
+  const blob = new Blob([file], {type: 'text/plain;charset=ascii'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AA9_12_' + g('cognome') + '_' + g('nome') + '.txt';
+  a.click();
+
+  alert('File telematico AA9/12 generato!\\n\\n' +
+    'Per inviarlo:\\n' +
+    '1. Vai su agenziaentrate.gov.it\\n' +
+    '2. Accedi con SPID\\n' +
+    '3. Servizi > Trasmissioni telematiche > Invio documenti\\n' +
+    '4. Seleziona "Attribuzione partita IVA ditta individuale"\\n' +
+    '5. Carica il file appena scaricato\\n' +
+    '6. Clicca Invia\\n\\n' +
+    'Riceverai il numero P.IVA via PEC.');
 }
 
 // =========================================================
