@@ -841,35 +841,68 @@ function apriPIVA() {
     </div>
 
     <div class="summary-section">
-      <h3>Step 3 — Apri la P.IVA (5 minuti)</h3>
+      <h3>Step 3 — Presenta il modello AA9/12</h3>
       <p style="color:var(--text2);font-size:14px;line-height:1.7;margin-bottom:16px">
-        Con SPID e PEC, vai sul sito dell'Agenzia delle Entrate e compila il modello AA9/12.
-        FiscalAI ha precompilato tutto — copia i dati qui sotto.
+        Scegli come presentare. FiscalAI ha precompilato tutti i dati — copia quelli qui sotto.
       </p>
-      <a href="https://www.agenziaentrate.gov.it/portale/invio-diretto-aa9-piva-pf-cittadini" target="_blank" class="btn btn-primary" style="text-decoration:none;margin-bottom:20px">
-        Vai all'Agenzia delle Entrate →
-      </a>
 
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:12px">
-        <h4 style="font-size:13px;color:var(--accent2);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px">Modello AA9/12 — Dati precompilati</h4>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);line-height:2.2">
-          <div><span style="color:var(--text3)">Tipo dichiarazione:</span> Inizio attivita</div>
-          <div><span style="color:var(--text3)">Codice Fiscale:</span> <strong>${g('cf').toUpperCase() || '(inserisci)'}</strong></div>
-          <div><span style="color:var(--text3)">Cognome Nome:</span> ${g('cognome')} ${g('nome')}</div>
-          <div><span style="color:var(--text3)">Nato a:</span> ${g('comuneNascita')} (${g('provNascita').toUpperCase()}) il ${g('dob')}</div>
-          <div><span style="color:var(--text3)">Residenza:</span> ${g('indirizzo')}</div>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-            <div><span style="color:var(--text3)">Codice ATECO:</span> <strong style="color:var(--accent3)">${selectedAteco.code}</strong></div>
-            <div><span style="color:var(--text3)">Descrizione:</span> ${document.getElementById('attivita').value || 'Sviluppo software, progettazione sistemi'}</div>
-            <div><span style="color:var(--text3)">Regime fiscale:</span> <strong>Forfettario (L. 190/2014)</strong></div>
-            <div><span style="color:var(--text3)">Aliquota:</span> <strong style="color:var(--green2)">${aliquota}%</strong> (primi 5 anni)</div>
-          </div>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-            <div><span style="color:var(--text3)">Email:</span> ${g('email')}</div>
-            <div><span style="color:var(--text3)">Telefono:</span> ${g('telefono')}</div>
-            <div><span style="color:var(--text3)">PEC:</span> <span id="pecDisplay">(compila sopra)</span></div>
-          </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+        <a href="https://www.agenziaentrate.gov.it/portale/invio-diretto-aa9-piva-pf-cittadini" target="_blank" class="btn btn-primary" style="text-decoration:none;justify-content:space-between">
+          <span>Online con SPID — Invio diretto</span><span style="opacity:0.7;font-size:12px">5 min, P.IVA in giornata</span>
+        </a>
+        <a href="https://www.agenziaentrate.gov.it/portale/schede/istanze/aa9_11-apertura-variazione-chiusura-pf/sw-compilazione-pi-pf" target="_blank" class="btn btn-ghost" style="text-decoration:none;justify-content:space-between">
+          <span>Software AdE — compila offline, carica con SPID</span><span style="opacity:0.7;font-size:12px">alternativa</span>
+        </a>
+        <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/Modello+aa9_AA9_12+modello.pdf" target="_blank" class="btn btn-ghost" style="text-decoration:none;justify-content:space-between">
+          <span>Stampa PDF — porta di persona all'ufficio AdE</span><span style="opacity:0.7;font-size:12px">senza SPID</span>
+        </a>
+        <div style="font-size:12px;color:var(--text3);padding:4px 0">
+          Oppure: stampa, compila, spedisci via raccomandata A/R + fotocopia documento a qualsiasi ufficio AdE.
         </div>
+      </div>
+
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <h4 style="font-size:13px;color:var(--accent2);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px">Modello AA9/12 — Dati precompilati</h4>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);line-height:2.4">
+
+          <div style="color:var(--accent);font-weight:700;margin-bottom:4px">QUADRO A — Tipo dichiarazione</div>
+          <div><span style="color:var(--text3)">Casella:</span> <strong>1</strong> (Inizio attivita)</div>
+          <div><span style="color:var(--text3)">Data inizio:</span> <strong>${new Date().toLocaleDateString('it-IT')}</strong></div>
+
+          <div style="color:var(--accent);font-weight:700;margin:12px 0 4px;padding-top:12px;border-top:1px solid var(--border)">QUADRO B — Soggetto d'imposta</div>
+          <div><span style="color:var(--text3)">Codice Fiscale:</span> <strong>${g('cf').toUpperCase() || '_______________'}</strong></div>
+          <div><span style="color:var(--text3)">Cognome:</span> <strong>${g('cognome').toUpperCase()}</strong></div>
+          <div><span style="color:var(--text3)">Nome:</span> <strong>${g('nome').toUpperCase()}</strong></div>
+          <div><span style="color:var(--text3)">Nato a:</span> ${g('comuneNascita').toUpperCase()} (${g('provNascita').toUpperCase()}) il ${g('dob')}</div>
+          <div><span style="color:var(--text3)">Sede attivita:</span> ${g('indirizzo')}</div>
+          <div><span style="color:var(--text3)">Codice ATECO:</span> <strong style="color:var(--accent3)">${selectedAteco.code}</strong></div>
+          <div><span style="color:var(--text3)">Descrizione:</span> ${document.getElementById('attivita').value || 'Sviluppo software'}</div>
+          <div style="color:var(--amber)"><span style="color:var(--text3)">Volume d'affari:</span> <strong>NON COMPILARE</strong> (forfettari esenti)</div>
+          <div style="color:var(--green2)"><span style="color:var(--text3)">Regime agevolato:</span> <strong>Casella 2</strong> — Forfettario (art.1 c.54 L.190/2014)</div>
+          <div><span style="color:var(--text3)">Scritture contabili:</span> NON barrare (forfettari esonerati)</div>
+
+          <div style="color:var(--accent);font-weight:700;margin:12px 0 4px;padding-top:12px;border-top:1px solid var(--border)">QUADRO C — Titolare</div>
+          <div><span style="color:var(--text3)">CF Titolare:</span> ${g('cf').toUpperCase() || '_______________'}</div>
+          <div><span style="color:var(--text3)">Residenza:</span> uguale al Quadro B</div>
+
+          <div style="color:var(--text3);margin:12px 0 4px;padding-top:12px;border-top:1px solid var(--border)">QUADRO D (Rappresentante): <strong>NON compilare</strong></div>
+          <div style="color:var(--text3)">QUADRO E (Op. straordinarie): <strong>NON compilare</strong></div>
+          <div style="color:var(--text3)">QUADRO F/G/H: <strong>NON compilare</strong></div>
+
+          <div style="color:var(--accent);font-weight:700;margin:12px 0 4px;padding-top:12px;border-top:1px solid var(--border)">QUADRO I — Altre informazioni</div>
+          <div><span style="color:var(--text3)">PEC:</span> <strong><span id="pecDisplay">(compila sopra)</span></strong></div>
+          <div><span style="color:var(--text3)">Email:</span> ${g('email')}</div>
+          <div><span style="color:var(--text3)">Telefono:</span> ${g('telefono')}</div>
+          <div><span style="color:var(--text3)">Titolarita immobile:</span> P (possesso) o D (affitto/comodato)</div>
+          <div><span style="color:var(--text3)">Tipo catasto:</span> F (fabbricato)</div>
+          <div><span style="color:var(--text3)">Tipologia clientela:</span> 1 (imprese) o 4 (misto)</div>
+          <div><span style="color:var(--text3)">Op. intracomunitarie:</span> NO (se non vendi in EU)</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/AA9_12+istruzioni_2024.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Istruzioni ufficiali PDF</a>
+        <span style="color:var(--border)">|</span>
+        <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/Modello+aa9_AA9_12+modello.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Modello PDF stampabile</a>
       </div>
     </div>
 
@@ -906,29 +939,183 @@ function attivaFiscalAI() {
     alert('Inserisci un numero di P.IVA valido (11 cifre)');
     return;
   }
+  const g = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  const nome = g('nome') || 'Utente';
+  const cognome = g('cognome') || '';
+  const ateco = selectedAteco.code;
+  const coeff = selectedAteco.coeff;
+  const fatturato = parseInt(g('simSlider') || '0') || 40000;
+  const reddito = fatturato * (coeff / 100);
+  const inps = reddito * 0.2607;
+  const imposta = reddito * (aliquota / 100);
+  const totTasse = inps + imposta;
+  const netto = fatturato - totTasse;
+  const mensile = totTasse / 12;
+
+  // Nascondi progress bar
+  document.getElementById('progress').style.display = 'none';
+
   const card = document.getElementById('step5');
+  card.style.maxWidth = '100%';
   card.innerHTML = `
-    <div style="text-align:center;padding:48px 0">
-      <div style="font-size:64px;margin-bottom:16px">🎉</div>
-      <div class="step-title" style="margin-bottom:8px">FiscalAI e' attivo!</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:24px;color:var(--accent3);margin:20px 0">
-        P.IVA ${piva}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="logo" style="margin-bottom:4px">FiscalAI</div>
+        <div style="font-size:22px;font-weight:700;color:#fff">${nome} ${cognome}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent2)">P.IVA ${piva} — ${ateco} — Forfettario ${aliquota}%</div>
       </div>
-      <p style="color:var(--text2);font-size:15px;max-width:460px;margin:0 auto;line-height:1.7">
-        Il tuo profilo e' stato inizializzato.<br>
-        Da questo momento FiscalAI gestisce tutto:<br><br>
-        ✅ Fatturazione elettronica XML<br>
-        ✅ Calcolo imposte e contributi<br>
-        ✅ Scadenzario F24 con notifiche<br>
-        ✅ Compliance e alert soglie<br>
-        ✅ Dichiarazione dei redditi<br><br>
-        <strong>Non devi piu preoccuparti di nulla.</strong>
-      </p>
-      <div style="margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3)">
-        Zero commercialista. Zero burocrazia. Solo lavoro.
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);text-align:right">
+        Attivo dal ${new Date().toLocaleDateString('it-IT')}<br>
+        Gestione Separata INPS
       </div>
     </div>
+
+    <!-- KPI Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
+      <div class="sim-box green">
+        <div class="sim-box-label">Ricavi ${new Date().getFullYear()}</div>
+        <div class="sim-box-value green" id="dashRicavi">€0</div>
+        <div class="sim-box-sub">0 fatture emesse</div>
+      </div>
+      <div class="sim-box">
+        <div class="sim-box-label">Tasse stimate</div>
+        <div class="sim-box-value" id="dashTasse">€0</div>
+        <div class="sim-box-sub">aliq. eff. 0%</div>
+      </div>
+      <div class="sim-box highlight">
+        <div class="sim-box-label">Accantona/mese</div>
+        <div class="sim-box-value accent" id="dashMensile">€0</div>
+        <div class="sim-box-sub">metti da parte</div>
+      </div>
+      <div class="sim-box">
+        <div class="sim-box-label">Prossima scadenza</div>
+        <div class="sim-box-value" style="font-size:16px" id="dashScadenza">—</div>
+        <div class="sim-box-sub">nessuna</div>
+      </div>
+    </div>
+
+    <!-- Emetti fattura -->
+    <div class="summary-section" style="border-color:var(--accent);background:rgba(14,165,233,0.04)">
+      <h3>Emetti fattura</h3>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Cliente (P.IVA o ragione sociale)</label>
+          <input type="text" id="dashCliente" placeholder="es: 01234567890 oppure Acme S.r.l.">
+        </div>
+        <div class="field full">
+          <label>Descrizione prestazione</label>
+          <input type="text" id="dashDescrizione" placeholder="es: Sviluppo firmware controllo motori">
+        </div>
+        <div class="field">
+          <label>Importo (€)</label>
+          <input type="number" id="dashImporto" placeholder="3500" min="0" step="0.01">
+        </div>
+        <div class="field">
+          <label>Data</label>
+          <input type="date" id="dashData" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:16px;width:100%" onclick="emettiFattura()">
+        Genera fattura XML →
+      </button>
+    </div>
+
+    <!-- Fatture emesse -->
+    <div class="summary-section">
+      <h3>Fatture emesse</h3>
+      <div id="dashFatture" style="color:var(--text3);font-size:14px">Nessuna fattura emessa</div>
+    </div>
+
+    <!-- Scadenzario -->
+    <div class="summary-section">
+      <h3>Scadenzario ${new Date().getFullYear()}</h3>
+      <div id="dashScadenzario" style="font-size:13px;color:var(--text2)">
+        <div style="padding:12px 0;color:var(--text3)">
+          Primo anno — nessun acconto dovuto.<br>
+          Il saldo imposte + INPS si paga entro il 30/06/${new Date().getFullYear() + 1}.
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="dashAlert"></div>
+
+    <div style="text-align:center;margin-top:32px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">
+      FiscalAI — Zero commercialista. Zero burocrazia. Solo lavoro.
+    </div>
   `;
+}
+
+// Dashboard state
+let dashFatture = [];
+let dashRicaviTotali = 0;
+
+function emettiFattura() {
+  const cliente = document.getElementById('dashCliente').value.trim();
+  const descrizione = document.getElementById('dashDescrizione').value.trim();
+  const importo = parseFloat(document.getElementById('dashImporto').value) || 0;
+  const data = document.getElementById('dashData').value;
+
+  if (!cliente || !descrizione || importo <= 0) {
+    alert('Compila tutti i campi: cliente, descrizione e importo');
+    return;
+  }
+
+  const numero = dashFatture.length + 1;
+  const bollo = importo > 77.47;
+  const fattura = { numero, cliente, descrizione, importo, data, bollo };
+  dashFatture.push(fattura);
+  dashRicaviTotali += importo;
+
+  // Aggiorna KPI
+  const coeff = selectedAteco.coeff / 100;
+  const reddito = dashRicaviTotali * coeff;
+  const inps = reddito * 0.2607;
+  const imposta = reddito * (aliquota / 100);
+  const totTasse = inps + imposta;
+  const aliqEff = dashRicaviTotali > 0 ? (totTasse / dashRicaviTotali * 100).toFixed(1) : '0.0';
+
+  document.getElementById('dashRicavi').textContent = fmt(dashRicaviTotali);
+  document.getElementById('dashRicavi').closest('.sim-box').querySelector('.sim-box-sub').textContent = dashFatture.length + ' fatture emesse';
+  document.getElementById('dashTasse').textContent = fmt(totTasse);
+  document.getElementById('dashTasse').closest('.sim-box').querySelector('.sim-box-sub').textContent = 'aliq. eff. ' + aliqEff + '%';
+  document.getElementById('dashMensile').textContent = fmt(totTasse / 12);
+
+  // Lista fatture
+  const lista = document.getElementById('dashFatture');
+  lista.innerHTML = dashFatture.map(f =>
+    `<div class="summary-row">
+      <span class="label">n.${f.numero} — ${f.cliente} ${f.bollo ? '<span style="color:var(--amber);font-size:11px">bollo €2</span>' : ''}</span>
+      <span class="value">€${f.importo.toLocaleString('it-IT', {minimumFractionDigits:2})}</span>
+    </div>`
+  ).join('');
+
+  // Alert soglie
+  const alertDiv = document.getElementById('dashAlert');
+  const mese = new Date().getMonth() + 1;
+  const proiezione = dashRicaviTotali / mese * 12;
+  if (proiezione >= 85000) {
+    alertDiv.innerHTML = `
+      <div class="summary-section" style="border-color:var(--red);background:rgba(239,68,68,0.06)">
+        <h3 style="color:#f87171">Alert Compliance</h3>
+        <p style="color:var(--text2);font-size:14px">
+          Proiezione annuale: <strong style="color:#f87171">€${Math.round(proiezione).toLocaleString('it-IT')}</strong> — rischio uscita dal forfettario!
+        </p>
+      </div>`;
+  } else if (proiezione >= 70000) {
+    alertDiv.innerHTML = `
+      <div class="summary-section" style="border-color:var(--amber);background:rgba(245,158,11,0.06)">
+        <h3 style="color:var(--amber)">Attenzione</h3>
+        <p style="color:var(--text2);font-size:14px">
+          Proiezione annuale: <strong style="color:var(--amber)">€${Math.round(proiezione).toLocaleString('it-IT')}</strong> — monitora la soglia 85k.
+        </p>
+      </div>`;
+  }
+
+  // Pulisci form
+  document.getElementById('dashCliente').value = '';
+  document.getElementById('dashDescrizione').value = '';
+  document.getElementById('dashImporto').value = '';
 }
 
 function demoMode() {
