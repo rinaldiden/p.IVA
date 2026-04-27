@@ -621,6 +621,9 @@ input[type=range]::-webkit-slider-thumb{
     <button class="btn btn-ghost" onclick="goStep(4)"><span>←</span> Indietro</button>
     <button class="btn btn-success" id="btnApri" disabled onclick="apriPIVA()">Apri la P.IVA →</button>
   </div>
+  <div style="text-align:center;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+    <button class="btn btn-ghost" style="font-size:12px;opacity:0.7" onclick="demoMode()">Simulazione Demo — precompila tutto e sblocca</button>
+  </div>
 </div>
 
 </div>
@@ -926,6 +929,52 @@ function attivaFiscalAI() {
       </div>
     </div>
   `;
+}
+
+function demoMode() {
+  // Precompila anagrafica
+  document.getElementById('nome').value = 'Daniele';
+  document.getElementById('cognome').value = 'Rinaldi';
+  document.getElementById('cf').value = 'RNLDNL90A01H501Z';
+  document.getElementById('dob').value = '1990-01-01';
+  document.getElementById('comuneNascita').value = 'Domodossola';
+  document.getElementById('provNascita').value = 'VB';
+  document.getElementById('indirizzo').value = 'Via Roma 1, 28845 Domodossola (VB)';
+  document.getElementById('email').value = 'daniele@fiscalai.dev';
+  document.getElementById('telefono').value = '+39 333 1234567';
+
+  // Precompila attivita
+  document.getElementById('attivita').value = 'Sviluppo software per controllo motori, stampa 3D, progettazione sistema guida autonoma per biciclette';
+
+  // ATECO 62.01.00 gia selezionato
+  // Requisiti: tutto NO = 5%
+  checks.q1 = false; checks.q2 = false; checks.q3 = false;
+  aliquota = 5;
+
+  // Slider a 50k
+  document.getElementById('simSlider').value = 50000;
+  updateSim();
+
+  // Sblocca conferma
+  document.getElementById('confirmCheck').checked = true;
+  updateConfirmBtn();
+
+  // Mostra la pagina di apertura
+  buildSummary();
+  apriPIVA();
+
+  // Precompila PEC nel flusso post-conferma
+  setTimeout(() => {
+    const pecEl = document.getElementById('pec');
+    if (pecEl) {
+      pecEl.value = 'daniele.rinaldi@pec.it';
+      const pecDisp = document.getElementById('pecDisplay');
+      if (pecDisp) pecDisp.textContent = 'daniele.rinaldi@pec.it';
+    }
+    // Simula P.IVA ricevuta
+    const pivaEl = document.getElementById('numeroPiva');
+    if (pivaEl) pivaEl.value = '04271990035';
+  }, 200);
 }
 
 // Init
