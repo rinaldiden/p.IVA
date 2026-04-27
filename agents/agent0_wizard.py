@@ -104,8 +104,8 @@ def genera_aa9_12(dati: dict) -> dict:
             },
         },
 
-        # Quadro C — Attivita
-        "quadro_c": {
+        # Quadro B — Attivita esercitata e luogo di esercizio
+        "quadro_b_attivita": {
             "codice_ateco": dati.get("ateco", "62.01.00"),
             "descrizione_attivita": dati.get("descrizione_attivita",
                 "Sviluppo software, progettazione sistemi di controllo, prototipazione"),
@@ -116,26 +116,76 @@ def genera_aa9_12(dati: dict) -> dict:
                 "provincia": dati["provincia_residenza"],
                 "cap": dati["cap_residenza"],
             },
-            "volume_affari_presunto": dati.get("fatturato_stimato", 0),
+            # NOTA: i forfettari NON indicano il volume d'affari presunto
+            # (istruzioni pag.4: "non deve essere compilato dai soggetti che
+            # intendono avvalersi del regime previsto dall'art. 1, comma 54, L. 190/2014")
+            "volume_affari_presunto": None,
+            "regime_fiscale_agevolato": "2",
+            # Casella 2 = REGIME FORFETARIO (art. 1, comma 54, L. 23/12/2014, n. 190)
+            "_nota_regime": "Barrare casella 2 nel riquadro 'Regimi fiscali agevolati'",
+            "scritture_contabili": False,
+            # Forfettari esonerati da scritture contabili
         },
 
-        # Quadro D — Opzioni IVA
+        # Quadro C — Titolare
+        "quadro_c": {
+            "codice_fiscale_titolare": dati["codice_fiscale"],
+            "residenza_anagrafica": {
+                "comune": dati["comune_residenza"],
+                "provincia": dati["provincia_residenza"],
+                "cap": dati["cap_residenza"],
+                "indirizzo": dati["indirizzo_residenza"],
+            },
+            "scritture_contabili": False,
+        },
+
+        # Quadro D — Rappresentante (NON compilare per persona fisica autonoma)
         "quadro_d": {
-            "regime_fiscale": "forfettario",
-            "riferimento_normativo": "L. 190/2014, commi 54-89",
+            "_nota": "Non compilare — il titolare agisce in proprio",
         },
 
-        # Quadro E — Comunicazioni
+        # Quadro E — Operazioni straordinarie (NON compilare per inizio attivita)
         "quadro_e": {
-            "pec": dati.get("pec", ""),
-            "telefono": dati.get("telefono", ""),
-            "email": dati.get("email", ""),
+            "_nota": "Non compilare — dichiarazione di inizio attivita semplice",
         },
 
-        # Quadro I — Fatturazione elettronica
+        # Quadro G — Altre attivita (compilare solo se ATECO secondario)
+        "quadro_g": {
+            "ateco_secondario": dati.get("ateco_secondario"),
+            "descrizione_secondaria": dati.get("descrizione_secondaria"),
+            "_nota": "Compilare solo se si esercitano altre attivita oltre a quella prevalente",
+        },
+
+        # Quadro I — Altre informazioni in sede di inizio attivita
         "quadro_i": {
-            "codice_destinatario_sdi": dati.get("codice_sdi", "0000000"),
-            "pec_sdi": dati.get("pec", ""),
+            "email": dati.get("email", ""),
+            "telefono": dati.get("telefono", ""),
+            "pec": dati.get("pec", ""),
+            "dati_immobile_sede": {
+                "titolarita": dati.get("titolarita_immobile", "P"),
+                # P = possesso, D = detenzione (affitto/comodato)
+                "tipo_catasto": "F",  # F = fabbricato, T = terreno
+            },
+            "operazioni_intracomunitarie": dati.get("operazioni_intracomunitarie", False),
+            # Se True, viene richiesta inclusione archivio VIES
+            "tipologia_clientela": dati.get("tipologia_clientela", "1"),
+            # 1 = imprese, 2 = enti pubblici, 3 = consumatori finali, 4 = altro
+            "luogo_aperto_al_pubblico": dati.get("luogo_aperto_pubblico", False),
+        },
+
+        # Modalita di presentazione
+        "presentazione": {
+            "modalita": "telematica_diretta",
+            # Opzioni: telematica_diretta (Fisconline con SPID),
+            #          ufficio (duplice copia + documento),
+            #          raccomandata (+ fotocopia documento),
+            #          intermediario (commercialista/CAF)
+            "url_fisconline": "https://www.agenziaentrate.gov.it/portale/invio-diretto-aa9-piva-pf-cittadini",
+            "url_modello_pdf": "https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/Modello+aa9_AA9_12+modello.pdf",
+            "url_istruzioni_pdf": "https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/AA9_12+istruzioni_2024.pdf",
+            "url_software_compilazione": "https://www.agenziaentrate.gov.it/portale/schede/istanze/aa9_11-apertura-variazione-chiusura-pf/sw-compilazione-pi-pf",
+            "_nota": "Presentazione entro 30 giorni dalla data di inizio attivita. "
+                     "La data di inizio non puo essere successiva alla data di presentazione.",
         },
     }
 
@@ -238,43 +288,68 @@ Appuntati l'indirizzo (es. tuonome@pec.it).
 Vai su [posteid.poste.it](https://posteid.poste.it/) e fai SPID con Poste (gratis).
 Se non hai CIE, usa [Namirial](https://www.namirial.it/spid/) con video-riconoscimento (€15).
 
-## Apertura P.IVA (5 minuti)
+## Apertura P.IVA — 4 modi per presentare il modello
 
-### Step 1: Accedi al sito dell'Agenzia delle Entrate
-- Vai su [agenziaentrate.gov.it](https://www.agenziaentrate.gov.it/)
-- Accedi con SPID
-- Cerca "Apertura Partita IVA" nei servizi
+### Opzione 1: TELEMATICA DIRETTA (consigliata — con SPID)
+1. Vai su [Invio diretto AA9/12](https://www.agenziaentrate.gov.it/portale/invio-diretto-aa9-piva-pf-cittadini)
+2. Accedi con SPID
+3. Compila il modello online con i dati qui sotto
+4. Invia — ricevi il numero P.IVA lo stesso giorno o il giorno dopo
 
-### Step 2: Compila il modello AA9/12
-FiscalAI ha gia precompilato tutto. I dati da inserire:
+### Opzione 2: SOFTWARE AdE (alternativa — con SPID)
+1. Scarica il [software di compilazione](https://www.agenziaentrate.gov.it/portale/schede/istanze/aa9_11-apertura-variazione-chiusura-pf/sw-compilazione-pi-pf)
+2. Compila offline, genera il file
+3. Caricalo nell'area riservata Fisconline
 
-**Quadro A — Tipo dichiarazione**
-- Inizio attivita: {date.today().strftime('%d/%m/%Y')}
+### Opzione 3: DI PERSONA (senza SPID)
+1. Stampa il [modello AA9/12 PDF](https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/Modello+aa9_AA9_12+modello.pdf)
+2. Compilalo a mano con i dati qui sotto
+3. Portalo in **duplice copia** a qualsiasi ufficio dell'Agenzia delle Entrate
+4. Porta un documento d'identita valido
+5. Ricevi il numero P.IVA in giornata
 
-**Quadro B — I tuoi dati**
-- Codice Fiscale: {dati.get('codice_fiscale', '_______________')}
-- Cognome: {dati.get('cognome', '')}
-- Nome: {dati.get('nome', '')}
-- Residenza: {dati.get('indirizzo_residenza', '_______________')}
-  {dati.get('cap_residenza', '_____')} {dati.get('comune_residenza', '_______________')} ({dati.get('provincia_residenza', '__')})
+### Opzione 4: RACCOMANDATA (senza SPID, senza ufficio)
+1. Stampa e compila il modello AA9/12
+2. Allega fotocopia documento d'identita
+3. Spedisci via raccomandata A/R a qualsiasi ufficio AdE
+4. La dichiarazione si considera presentata il giorno della spedizione
 
-**Quadro C — Attivita**
+---
+
+## Dati da inserire nel modello AA9/12
+
+**QUADRO A — Tipo dichiarazione**
+- Barrare casella **1** (Inizio attivita)
+- Data inizio attivita: **{date.today().strftime('%d/%m/%Y')}**
+
+**QUADRO B — Soggetto d'imposta**
+- Cognome: **{dati.get('cognome', '_______________')}**
+- Nome: **{dati.get('nome', '_______________')}**
+- Codice Fiscale: **{dati.get('codice_fiscale', '_______________')}**
 - Codice ATECO: **{ateco}**
-- Descrizione: {dati.get('descrizione_attivita', 'Sviluppo software, progettazione sistemi di controllo, prototipazione')}
-- Luogo: uguale alla residenza
+- Descrizione attivita: {dati.get('descrizione_attivita', 'Sviluppo software, progettazione sistemi di controllo, prototipazione')}
+- Indirizzo sede: {dati.get('indirizzo_residenza', '_______________')}
+  {dati.get('cap_residenza', '_____')} {dati.get('comune_residenza', '_______________')} ({dati.get('provincia_residenza', '__')})
+- Volume d'affari presunto: **NON COMPILARE** (i forfettari non lo indicano!)
+- Regimi fiscali agevolati: barrare casella **2** (Forfettario L. 190/2014)
+- Scritture contabili: **NON barrare** (forfettari esonerati)
 
-**Quadro D — Regime**
-- Seleziona: **Regime forfettario (L. 190/2014)**
+**QUADRO C — Titolare**
+- Codice fiscale: {dati.get('codice_fiscale', '_______________')}
+- Residenza: uguale al Quadro B
 
-**Quadro E — Contatti**
-- PEC: {dati.get('pec', '_______________')}
+**QUADRO D — Rappresentante**: NON compilare
+**QUADRO E — Operazioni straordinarie**: NON compilare
+**QUADRO F, G, H**: NON compilare (salvo attivita secondarie)
+
+**QUADRO I — Altre informazioni**
+- PEC: **{dati.get('pec', '_______________')}**
 - Email: {dati.get('email', '')}
 - Telefono: {dati.get('telefono', '')}
-
-### Step 3: Invia
-- Controlla il riepilogo
-- Conferma e invia
-- Ricevi il numero di P.IVA in 1-2 giorni lavorativi via PEC
+- Titolarita immobile sede: P (possesso) o D (detenzione/affitto)
+- Tipo catasto: F (fabbricato)
+- Tipologia clientela prevalente: 1 (imprese) o 4 (misto)
+- Operazioni intracomunitarie: {'SI (richiesta iscrizione VIES)' if dati.get('operazioni_intracomunitarie') else 'NO'}
 
 ## Dopo l'apertura
 
