@@ -835,7 +835,7 @@ function apriPIVA() {
       </p>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <a href="https://posteid.poste.it/" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Poste ID — Gratis</a>
-        <a href="https://guide.pec.it/spid/richiesta-spid.aspx" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Aruba SPID — Gratis</a>
+        <a href="https://www.pec.it/richiedi-spid-aruba-id.aspx" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Aruba SPID — Gratis</a>
         <a href="https://www.namirial.it/spid/" target="_blank" class="btn btn-ghost" style="text-decoration:none;font-size:13px">Namirial — €15</a>
       </div>
     </div>
@@ -846,7 +846,7 @@ function apriPIVA() {
         Con SPID e PEC, vai sul sito dell'Agenzia delle Entrate e compila il modello AA9/12.
         FiscalAI ha precompilato tutto — copia i dati qui sotto.
       </p>
-      <a href="https://www.agenziaentrate.gov.it/portale/schede/istanze/aa9_11-apertura-variazione-chiusura-pf/come-aprire-la-partita-iva" target="_blank" class="btn btn-primary" style="text-decoration:none;margin-bottom:20px">
+      <a href="https://www.agenziaentrate.gov.it/portale/invio-diretto-aa9-piva-pf-cittadini" target="_blank" class="btn btn-primary" style="text-decoration:none;margin-bottom:20px">
         Vai all'Agenzia delle Entrate →
       </a>
 
@@ -932,46 +932,41 @@ function attivaFiscalAI() {
 }
 
 function demoMode() {
-  // Precompila anagrafica
-  document.getElementById('nome').value = 'Daniele';
-  document.getElementById('cognome').value = 'Rinaldi';
-  document.getElementById('cf').value = 'RNLDNL90A01H501Z';
-  document.getElementById('dob').value = '1990-01-01';
-  document.getElementById('comuneNascita').value = 'Domodossola';
-  document.getElementById('provNascita').value = 'VB';
-  document.getElementById('indirizzo').value = 'Via Roma 1, 28845 Domodossola (VB)';
-  document.getElementById('email').value = 'daniele@fiscalai.dev';
-  document.getElementById('telefono').value = '+39 333 1234567';
+  // Se i campi sono vuoti, precompila con dati demo
+  const fill = (id, val) => { if (!document.getElementById(id).value) document.getElementById(id).value = val; };
+  fill('nome', 'Daniele');
+  fill('cognome', 'Rinaldi');
+  fill('cf', 'RNLDNL90A01H501Z');
+  fill('dob', '1990-01-01');
+  fill('comuneNascita', 'Domodossola');
+  fill('provNascita', 'VB');
+  fill('indirizzo', 'Via Roma 1, 28845 Domodossola (VB)');
+  fill('email', 'daniele@fiscalai.dev');
+  fill('telefono', '+39 333 1234567');
+  fill('attivita', 'Sviluppo software per controllo motori, stampa 3D, guida autonoma biciclette');
 
-  // Precompila attivita
-  document.getElementById('attivita').value = 'Sviluppo software per controllo motori, stampa 3D, progettazione sistema guida autonoma per biciclette';
+  // Requisiti: se non risposte, default NO = 5%
+  if (checks.q1 === null) checks.q1 = false;
+  if (checks.q2 === null) checks.q2 = false;
+  if (checks.q3 === null) checks.q3 = false;
+  if (aliquota !== 15) aliquota = 5;
 
-  // ATECO 62.01.00 gia selezionato
-  // Requisiti: tutto NO = 5%
-  checks.q1 = false; checks.q2 = false; checks.q3 = false;
-  aliquota = 5;
-
-  // Slider a 50k
-  document.getElementById('simSlider').value = 50000;
-  updateSim();
-
-  // Sblocca conferma
+  // Sblocca conferma e vai alla pagina di apertura
   document.getElementById('confirmCheck').checked = true;
   updateConfirmBtn();
-
-  // Mostra la pagina di apertura
   buildSummary();
   apriPIVA();
 
-  // Precompila PEC nel flusso post-conferma
+  // Precompila PEC e P.IVA mock
   setTimeout(() => {
     const pecEl = document.getElementById('pec');
     if (pecEl) {
-      pecEl.value = 'daniele.rinaldi@pec.it';
+      const cognome = document.getElementById('cognome').value.toLowerCase();
+      const nome = document.getElementById('nome').value.toLowerCase();
+      pecEl.value = nome + '.' + cognome + '@pec.it';
       const pecDisp = document.getElementById('pecDisplay');
-      if (pecDisp) pecDisp.textContent = 'daniele.rinaldi@pec.it';
+      if (pecDisp) pecDisp.textContent = pecEl.value;
     }
-    // Simula P.IVA ricevuta
     const pivaEl = document.getElementById('numeroPiva');
     if (pivaEl) pivaEl.value = '04271990035';
   }, 200);

@@ -174,7 +174,7 @@ def genera_checklist(dati: dict) -> dict:
             "come_fare": "Riconoscimento video online (10 minuti). Gratis o €10 una tantum.",
             "link": [
                 {"provider": "Poste Italiane", "url": "https://posteid.poste.it/", "prezzo": "Gratis (con CIE/SMS)"},
-                {"provider": "Aruba", "url": "https://guide.pec.it/spid/richiesta-spid.aspx", "prezzo": "Gratis"},
+                {"provider": "Aruba", "url": "https://www.pec.it/richiedi-spid-aruba-id.aspx", "prezzo": "Gratis"},
                 {"provider": "Namirial", "url": "https://www.namirial.it/spid/", "prezzo": "€15 una tantum"},
                 {"provider": "InfoCert", "url": "https://identitadigitale.infocert.it/", "prezzo": "Gratis (con CIE)"},
             ],
