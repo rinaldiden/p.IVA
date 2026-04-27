@@ -161,7 +161,7 @@ def genera_checklist(dati: dict) -> dict:
             "stato": "da_fare" if not dati.get("pec") else "fatto",
             "come_fare": "Apri una PEC su uno di questi provider (2 minuti, €5-10/anno)",
             "link": [
-                {"provider": "Aruba PEC", "url": "https://www.pec.it/acquista-pec.aspx", "prezzo": "€5/anno"},
+                {"provider": "Aruba PEC", "url": "https://www.pec.it/acquista-posta-elettronica-certificata.aspx", "prezzo": "€5/anno"},
                 {"provider": "Register.it", "url": "https://www.register.it/pec/", "prezzo": "€5/anno"},
                 {"provider": "Legalmail (InfoCert)", "url": "https://www.legalmail.it/", "prezzo": "€6/anno"},
             ],
@@ -231,7 +231,7 @@ def genera_guida_apertura(dati: dict) -> str:
 ## Prerequisiti
 
 ### 1. PEC (2 minuti)
-Vai su [pec.it](https://www.pec.it/acquista-pec.aspx) e apri una PEC Aruba a €5/anno.
+Vai su [pec.it](https://www.pec.it/acquista-posta-elettronica-certificata.aspx) e apri una PEC Aruba a €5/anno.
 Appuntati l'indirizzo (es. tuonome@pec.it).
 
 ### 2. SPID (10 minuti)
