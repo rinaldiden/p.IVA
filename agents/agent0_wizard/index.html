@@ -635,6 +635,60 @@ let selectedAteco = { code: '62.01.00', coeff: 67, inps: 'gs' };
 let aliquota = 5;
 const checks = { q1: null, q2: null, q3: null };
 
+// =========================================================
+// SALVATAGGIO AUTOMATICO IN LOCALSTORAGE
+// =========================================================
+const SAVE_KEY = 'fiscalai_wizard';
+const FORM_FIELDS = ['nome','cognome','cf','dob','comuneNascita','provNascita','indirizzo','email','telefono','attivita'];
+
+function salvaStato() {
+  const stato = { step: currentStep, ateco: selectedAteco, aliquota, checks };
+  FORM_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) stato[id] = el.value;
+  });
+  const slider = document.getElementById('simSlider');
+  if (slider) stato.simSlider = slider.value;
+  localStorage.setItem(SAVE_KEY, JSON.stringify(stato));
+}
+
+function caricaStato() {
+  const saved = localStorage.getItem(SAVE_KEY);
+  if (!saved) return;
+  try {
+    const stato = JSON.parse(saved);
+    FORM_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && stato[id]) el.value = stato[id];
+    });
+    if (stato.ateco) {
+      selectedAteco = stato.ateco;
+      document.querySelectorAll('.ateco-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.ateco === selectedAteco.code);
+      });
+    }
+    if (stato.aliquota) aliquota = stato.aliquota;
+    if (stato.checks) Object.assign(checks, stato.checks);
+    if (stato.simSlider) document.getElementById('simSlider').value = stato.simSlider;
+    if (stato.step && stato.step > 1) {
+      // Restore to saved step
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step' + stato.step).classList.add('active');
+      document.querySelectorAll('.progress-step').forEach((el, i) => {
+        const stepNum = i + 1;
+        el.classList.remove('active', 'done');
+        if (stepNum < stato.step) el.classList.add('done');
+        else if (stepNum === stato.step) el.classList.add('active');
+      });
+      currentStep = stato.step;
+    }
+  } catch(e) { console.warn('Errore caricamento stato:', e); }
+}
+
+// Auto-save ogni volta che un campo cambia
+document.addEventListener('input', () => { clearTimeout(window._saveTimer); window._saveTimer = setTimeout(salvaStato, 300); });
+document.addEventListener('change', salvaStato);
+
 function goStep(n) {
   if (n === currentStep) return;
   document.getElementById('step' + currentStep).classList.remove('active');
@@ -650,6 +704,7 @@ function goStep(n) {
   currentStep = n;
   if (n === 4) updateSim();
   if (n === 5) buildSummary();
+  salvaStato();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1165,6 +1220,18 @@ function demoMode() {
 // GENERA PDF AA9/12 COMPILATO
 // =========================================================
 function generaPdfAA9() {
+  if (!window.jspdf) {
+    // Carica jsPDF dinamicamente se non e' disponibile
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
+    s.onload = () => generaPdfAA9();
+    s.onerror = () => {
+      // Fallback: genera un file di testo scaricabile
+      generaTxtAA9();
+    };
+    document.head.appendChild(s);
+    return;
+  }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const g = id => (document.getElementById(id)?.value || '');
@@ -1421,7 +1488,68 @@ function generaPdfAA9() {
   doc.save(filename);
 }
 
+function generaTxtAA9() {
+  const g = id => (document.getElementById(id)?.value || '');
+  const oggi = new Date().toLocaleDateString('it-IT');
+  const pec = document.getElementById('pec')?.value || '';
+  const atecoDesc = document.querySelector('.ateco-card.selected .ateco-desc')?.textContent || '';
+
+  let t = '';
+  t += '═══════════════════════════════════════════════════════\n';
+  t += '  MODELLO AA9/12 — DICHIARAZIONE DI INIZIO ATTIVITA\n';
+  t += '  Generato da FiscalAI il ' + oggi + '\n';
+  t += '═══════════════════════════════════════════════════════\n\n';
+  t += '  QUADRO A — TIPO DI DICHIARAZIONE\n';
+  t += '  ─────────────────────────────────\n';
+  t += '  [X] 1 - INIZIO ATTIVITA\n';
+  t += '  Data inizio: ' + oggi + '\n\n';
+  t += '  QUADRO B — SOGGETTO D\'IMPOSTA\n';
+  t += '  ─────────────────────────────────\n';
+  t += '  Codice Fiscale:      ' + g('cf').toUpperCase() + '\n';
+  t += '  Cognome:             ' + g('cognome').toUpperCase() + '\n';
+  t += '  Nome:                ' + g('nome').toUpperCase() + '\n';
+  t += '  Codice ATECO:        ' + selectedAteco.code + '\n';
+  t += '  Descrizione:         ' + atecoDesc + '\n';
+  t += '  Sede attivita:       ' + g('indirizzo') + '\n';
+  t += '  Volume d\'affari:     *** NON COMPILARE (forfettari esenti) ***\n';
+  t += '  Regime agevolato:    [X] Casella 2 — Forfettario (L. 190/2014)\n';
+  t += '  Scritture contabili: [ ] NON barrare\n\n';
+  t += '  QUADRO C — TITOLARE\n';
+  t += '  ─────────────────────────────────\n';
+  t += '  Codice Fiscale:      ' + g('cf').toUpperCase() + '\n';
+  t += '  Cognome:             ' + g('cognome').toUpperCase() + '\n';
+  t += '  Nome:                ' + g('nome').toUpperCase() + '\n';
+  t += '  Data nascita:        ' + g('dob') + '\n';
+  t += '  Comune nascita:      ' + g('comuneNascita').toUpperCase() + ' (' + g('provNascita').toUpperCase() + ')\n';
+  t += '  Residenza:           ' + g('indirizzo') + '\n\n';
+  t += '  QUADRO D: NON compilare\n';
+  t += '  QUADRO E: NON compilare\n';
+  t += '  QUADRO F/G/H: NON compilare\n\n';
+  t += '  QUADRO I — ALTRE INFORMAZIONI\n';
+  t += '  ─────────────────────────────────\n';
+  t += '  PEC:                 ' + pec + '\n';
+  t += '  Email:               ' + g('email') + '\n';
+  t += '  Telefono:            ' + g('telefono') + '\n';
+  t += '  Titolarita immobile: P (possesso)\n';
+  t += '  Tipo catasto:        F (fabbricato)\n';
+  t += '  Tipologia clientela: 1 (imprese)\n';
+  t += '  Op. intracomunitarie: NO\n\n';
+  t += '═══════════════════════════════════════════════════════\n';
+  t += '  Porta questo documento all\'ufficio AdE insieme a:\n';
+  t += '  - Documento d\'identita valido\n';
+  t += '  - Il modello AA9/12 compilato (scaricalo da:\n';
+  t += '    agenziaentrate.gov.it → modello AA9/12)\n';
+  t += '═══════════════════════════════════════════════════════\n';
+
+  const blob = new Blob([t], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'AA9_12_' + g('cognome').toUpperCase() + '_' + g('nome').toUpperCase() + '.txt';
+  a.click();
+}
+
 // Init
+caricaStato();
 updateSim();
 </script>
 </body>
