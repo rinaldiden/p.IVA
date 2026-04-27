@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FiscalAI — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;
+  --surface:#151d2e;--surface2:#1c2940;
+  --text:#e8ecf4;--text2:#94a3b8;--text3:#64748b;
+  --accent:#0ea5e9;--accent2:#06b6d4;--accent3:#22d3ee;
+  --green:#10b981;--green2:#34d399;
+  --amber:#f59e0b;--red:#ef4444;
+  --border:#1e293b;--border2:#334155;
+  --radius:12px;--radius2:16px;
+}
+html{font-size:16px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(14,165,233,0.06),transparent)}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* Layout */
+.app{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 0 24px;flex-wrap:wrap;gap:12px}
+.topbar-left .logo{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--accent);
+  background:linear-gradient(135deg,var(--accent),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-left h1{font-size:20px;font-weight:700;margin-top:2px}
+.topbar-right{font-size:12px;color:var(--text3);text-align:right}
+.topbar-right .piva{font-family:'JetBrains Mono',monospace;color:var(--accent2);font-size:13px}
+
+/* KPI Grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:20px}
+.kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:6px}
+.kpi-value{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:#fff}
+.kpi-value.green{color:var(--green2)}
+.kpi-value.accent{color:var(--accent3)}
+.kpi-value.amber{color:var(--amber)}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:'JetBrains Mono',monospace}
+.kpi.highlight{border-color:var(--accent);background:rgba(14,165,233,0.04)}
+.kpi.green-hl{border-color:var(--green);background:rgba(16,185,129,0.04)}
+
+/* Tabs */
+.tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--border)}
+.tab{padding:12px 20px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:24px;margin-bottom:16px}
+.card h2{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:16px}
+.card-accent{border-color:var(--accent);background:rgba(14,165,233,0.03)}
+
+/* Form */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.three{grid-template-columns:2fr 1fr 1fr}
+.form-row.four{grid-template-columns:2fr 2fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3)}
+.field input,.field select,.field textarea{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:100%;transition:border-color 0.2s}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,165,233,0.12)}
+.field input::placeholder{color:var(--text3)}
+.field .auto-filled{border-color:var(--green);background:rgba(16,185,129,0.06)}
+
+/* Buttons */
+.btn{padding:12px 24px;border-radius:var(--radius);border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 12px rgba(14,165,233,0.25)}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(14,165,233,0.4);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--text3);color:var(--text)}
+.btn-sm{padding:8px 16px;font-size:12px}
+.btn-success{background:linear-gradient(135deg,var(--green),#059669);color:#fff}
+.btn-block{width:100%;justify-content:center}
+
+/* Table */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:var(--text3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+td.mono{font-family:'JetBrains Mono',monospace}
+td.right,th.right{text-align:right}
+.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:rgba(16,185,129,0.15);color:var(--green2)}
+.badge-amber{background:rgba(245,158,11,0.15);color:var(--amber)}
+.badge-red{background:rgba(239,68,68,0.15);color:#f87171}
+.badge-blue{background:rgba(14,165,233,0.15);color:var(--accent3)}
+
+/* Alert */
+.alert{padding:16px;border-radius:var(--radius);margin-bottom:16px;font-size:14px;display:flex;align-items:flex-start;gap:12px}
+.alert-warning{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);color:var(--amber)}
+.alert-danger{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171}
+.alert-info{background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);color:var(--accent3)}
+
+/* Lookup spinner */
+.lookup-status{font-size:12px;margin-top:4px;min-height:18px}
+.lookup-status.found{color:var(--green2)}
+.lookup-status.searching{color:var(--accent2)}
+.lookup-status.error{color:var(--red)}
+
+/* Scadenzario */
+.scad-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.scad-item:last-child{border-bottom:none}
+.scad-date{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent2);min-width:90px}
+.scad-desc{flex:1;padding:0 12px;font-size:13px}
+.scad-amount{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#fff}
+
+/* Responsive */
+@media(max-width:600px){
+  .form-row,.form-row.three,.form-row.four{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .kpi-value{font-size:20px}
+  .tabs{overflow-x:auto;flex-wrap:nowrap}
+  .tab{white-space:nowrap;padding:10px 14px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">FiscalAI</div>
+    <h1 id="topName">Dashboard</h1>
+  </div>
+  <div class="topbar-right">
+    <div class="piva" id="topPiva">P.IVA —</div>
+    <div id="topRegime">Forfettario — Gestione Separata</div>
+  </div>
+</div>
+
+<!-- KPI -->
+<div class="kpi-grid">
+  <div class="kpi green-hl">
+    <div class="kpi-label">Ricavi 2026</div>
+    <div class="kpi-value green" id="kpiRicavi">€0</div>
+    <div class="kpi-sub" id="kpiNumFatture">0 fatture</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Tasse stimate</div>
+    <div class="kpi-value" id="kpiTasse">€0</div>
+    <div class="kpi-sub" id="kpiAliquota">aliq. eff. 0%</div>
+  </div>
+  <div class="kpi highlight">
+    <div class="kpi-label">Netto in tasca</div>
+    <div class="kpi-value accent" id="kpiNetto">€0</div>
+    <div class="kpi-sub" id="kpiNettoPerc">—</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Accantona / mese</div>
+    <div class="kpi-value" id="kpiMensile">€0</div>
+    <div class="kpi-sub">metti da parte per le tasse</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Prossima scadenza</div>
+    <div class="kpi-value" id="kpiScadenza" style="font-size:16px">—</div>
+    <div class="kpi-sub" id="kpiScadenzaDesc">nessuna</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Proiezione annuale</div>
+    <div class="kpi-value" id="kpiProiezione">€0</div>
+    <div class="kpi-sub" id="kpiProiezioneSoglia">soglia €85.000</div>
+  </div>
+</div>
+
+<!-- ALERT AREA -->
+<div id="alertArea"></div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('fattura')">Nuova Fattura</div>
+  <div class="tab" onclick="showTab('fatture')">Fatture Emesse</div>
+  <div class="tab" onclick="showTab('scadenzario')">Scadenzario</div>
+  <div class="tab" onclick="showTab('banca')">Banca</div>
+  <div class="tab" onclick="showTab('situazione')">Situazione Fiscale</div>
+</div>
+
+<!-- TAB: Nuova Fattura -->
+<div class="tab-panel active" id="tab-fattura">
+  <div class="card card-accent">
+    <h2>Emetti fattura elettronica</h2>
+
+    <div class="form-row">
+      <div class="field">
+        <label>Cliente — P.IVA o ragione sociale</label>
+        <input type="text" id="fCliente" placeholder="es: 01234567890 oppure Acme S.r.l." oninput="lookupCliente()">
+        <div class="lookup-status" id="lookupStatus"></div>
+      </div>
+      <div class="field">
+        <label>Codice SDI / PEC destinatario</label>
+        <input type="text" id="fSDI" placeholder="0000000" maxlength="7" class="mono">
+      </div>
+    </div>
+
+    <div id="clienteAutoFields" style="display:none">
+      <div class="form-row four">
+        <div class="field">
+          <label>Ragione sociale</label>
+          <input type="text" id="fDenominazione" class="auto-filled">
+        </div>
+        <div class="field">
+          <label>Indirizzo</label>
+          <input type="text" id="fIndirizzo" class="auto-filled">
+        </div>
+        <div class="field">
+          <label>Comune</label>
+          <input type="text" id="fComune" class="auto-filled">
+        </div>
+        <div class="field">
+          <label>Prov.</label>
+          <input type="text" id="fProv" maxlength="2" class="auto-filled" style="text-transform:uppercase">
+        </div>
+      </div>
+    </div>
+
+    <div style="margin:16px 0 8px"><label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3)">Prestazioni</label></div>
+    <div id="prestazioniContainer">
+      <div class="form-row three prestazione-row">
+        <div class="field"><input type="text" placeholder="Descrizione prestazione" class="pDesc"></div>
+        <div class="field"><input type="number" placeholder="Importo €" class="pImporto" min="0" step="0.01"></div>
+        <div class="field"><input type="number" placeholder="Qt." class="pQta" value="1" min="1"></div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="aggiungiPrestazione()" style="margin-top:4px">+ Aggiungi riga</button>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;color:var(--text3)">Totale fattura</div>
+        <div class="mono" style="font-size:28px;font-weight:700;color:#fff" id="fTotale">€0,00</div>
+        <div style="font-size:12px;color:var(--text3)" id="fBolloNote"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="anteprimaFattura()">Anteprima</button>
+        <button class="btn btn-primary" onclick="emettiFattura()">Emetti e invia al SDI →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Fatture Emesse -->
+<div class="tab-panel" id="tab-fatture">
+  <div class="card">
+    <h2>Fatture emesse — 2026</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>N.</th><th>Data</th><th>Cliente</th><th>Descrizione</th><th>Bollo</th><th class="right">Importo</th><th>Stato SDI</th><th></th>
+        </tr></thead>
+        <tbody id="fattureBody">
+          <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:32px">Nessuna fattura emessa</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Scadenzario -->
+<div class="tab-panel" id="tab-scadenzario">
+  <div class="card">
+    <h2>Scadenzario 2026</h2>
+    <div class="alert alert-info">Primo anno di attivita — nessun acconto dovuto. Il saldo imposte + INPS si paga entro il 30/06/2027.</div>
+    <div id="scadenzarioList">
+      <div class="scad-item">
+        <div class="scad-date">30/06/2027</div>
+        <div class="scad-desc">Saldo imposta sostitutiva 2026</div>
+        <div class="scad-amount" id="scadImposta">da calcolare</div>
+      </div>
+      <div class="scad-item">
+        <div class="scad-date">30/06/2027</div>
+        <div class="scad-desc">Saldo INPS gestione separata 2026</div>
+        <div class="scad-amount" id="scadINPS">da calcolare</div>
+      </div>
+      <div class="scad-item">
+        <div class="scad-date">30/11/2027</div>
+        <div class="scad-desc">Dichiarazione Redditi PF 2026</div>
+        <div class="scad-amount">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Banca -->
+<div class="tab-panel" id="tab-banca">
+  <div class="card">
+    <h2>Collegamento Banca (Open Banking PSD2)</h2>
+    <div class="alert alert-info">Il collegamento bancario PSD2 permette di importare automaticamente i movimenti del conto, riconciliare incassi con fatture emesse e monitorare il saldo in tempo reale.</div>
+    <div class="form-row">
+      <div class="field">
+        <label>IBAN</label>
+        <input type="text" id="bIBAN" placeholder="IT60X0542811101000000123456" class="mono">
+      </div>
+      <div class="field">
+        <label>Banca</label>
+        <select id="bBanca">
+          <option value="">— Seleziona la tua banca —</option>
+          <option value="intesa">Intesa Sanpaolo</option>
+          <option value="unicredit">UniCredit</option>
+          <option value="bnl">BNL — BNP Paribas</option>
+          <option value="mps">Banca MPS</option>
+          <option value="credem">Credem</option>
+          <option value="mediolanum">Banca Mediolanum</option>
+          <option value="fineco">FinecoBank</option>
+          <option value="ing">ING</option>
+          <option value="revolut">Revolut</option>
+          <option value="n26">N26</option>
+          <option value="hype">HYPE</option>
+          <option value="altra">Altra banca</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="collegaBanca()" style="margin-top:12px">Collega conto via PSD2 →</button>
+
+    <div style="margin-top:24px">
+      <h3 style="font-size:13px;color:var(--text3);margin-bottom:12px">MOVIMENTI RECENTI</h3>
+      <div id="movimentiBanca" style="color:var(--text3);font-size:14px">Nessun conto collegato</div>
+    </div>
+
+    <div style="margin-top:24px">
+      <h3 style="font-size:13px;color:var(--text3);margin-bottom:12px">RICONCILIAZIONE AUTOMATICA</h3>
+      <p style="color:var(--text3);font-size:13px;line-height:1.6">
+        Quando il conto e' collegato, FiscalAI riconcilia automaticamente gli incassi con le fatture emesse.
+        Un accredito che corrisponde all'importo di una fattura viene associato automaticamente e la fattura passa a "incassata".
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: Situazione Fiscale -->
+<div class="tab-panel" id="tab-situazione">
+  <div class="card">
+    <h2>Situazione fiscale 2026</h2>
+    <div class="table-wrap">
+      <table>
+        <tbody id="situazioneBody">
+          <tr><td>Ricavi totali</td><td class="mono right" id="sitRicavi">€0</td></tr>
+          <tr><td>Coefficiente redditivita</td><td class="mono right" id="sitCoeff">67%</td></tr>
+          <tr><td>Reddito imponibile</td><td class="mono right" id="sitReddito">€0</td></tr>
+          <tr><td>INPS dedotti (pagati nell'anno)</td><td class="mono right">€0</td></tr>
+          <tr><td>Reddito ai fini imposta</td><td class="mono right" id="sitRedditoNetto">€0</td></tr>
+          <tr><td style="border-top:2px solid var(--border)">INPS gestione separata (26,07%)</td><td class="mono right" style="border-top:2px solid var(--border)" id="sitINPS">€0</td></tr>
+          <tr><td>Imposta sostitutiva (5%)</td><td class="mono right" id="sitImposta">€0</td></tr>
+          <tr><td>Bollo virtuale</td><td class="mono right" id="sitBollo">€0</td></tr>
+          <tr><td style="font-weight:700;border-top:2px solid var(--accent)">TOTALE TASSE</td><td class="mono right" style="font-weight:700;border-top:2px solid var(--accent);color:var(--accent3)" id="sitTotale">€0</td></tr>
+          <tr><td style="font-weight:700;color:var(--green2)">NETTO IN TASCA</td><td class="mono right" style="font-weight:700;color:var(--green2)" id="sitNetto">€0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<script>
+// =========================================================
+// STATE
+// =========================================================
+const STATE = {
+  profilo: {
+    nome: 'Daniele', cognome: 'Rinaldi',
+    piva: '04271990035', ateco: '62.01.00',
+    coeff: 0.67, aliquota: 0.05, gestione: 'separata',
+  },
+  fatture: [],
+  clienti: {},
+  ricavi: 0,
+};
+
+// =========================================================
+// INIT
+// =========================================================
+function init() {
+  // Load from URL params or localStorage
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('piva')) STATE.profilo.piva = params.get('piva');
+  if (params.get('nome')) STATE.profilo.nome = params.get('nome');
+  if (params.get('cognome')) STATE.profilo.cognome = params.get('cognome');
+
+  const saved = localStorage.getItem('fiscalai_state');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      Object.assign(STATE, s);
+    } catch(e) {}
+  }
+
+  document.getElementById('topName').textContent = STATE.profilo.nome + ' ' + STATE.profilo.cognome;
+  document.getElementById('topPiva').textContent = 'P.IVA ' + STATE.profilo.piva;
+  aggiornaKPI();
+  aggiornaFatture();
+}
+
+function salva() {
+  localStorage.setItem('fiscalai_state', JSON.stringify(STATE));
+}
+
+// =========================================================
+// TABS
+// =========================================================
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab-panel#tab-${name}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// =========================================================
+// LOOKUP CLIENTE
+// =========================================================
+let lookupTimer = null;
+function lookupCliente() {
+  clearTimeout(lookupTimer);
+  const q = document.getElementById('fCliente').value.trim();
+  if (q.length < 3) {
+    document.getElementById('lookupStatus').textContent = '';
+    document.getElementById('clienteAutoFields').style.display = 'none';
+    return;
+  }
+
+  // Check se e' una P.IVA (11 cifre)
+  const isPiva = /^\d{11}$/.test(q);
+  const cached = STATE.clienti[q];
+
+  if (cached) {
+    compilaCliente(cached);
+    return;
+  }
+
+  document.getElementById('lookupStatus').textContent = 'Cercando...';
+  document.getElementById('lookupStatus').className = 'lookup-status searching';
+
+  lookupTimer = setTimeout(() => {
+    if (isPiva) {
+      // Lookup via VIES
+      lookupVIES(q);
+    } else if (q.length >= 3) {
+      // Cerca in cache locale
+      const found = Object.values(STATE.clienti).find(c =>
+        c.denominazione.toLowerCase().includes(q.toLowerCase())
+      );
+      if (found) {
+        compilaCliente(found);
+      } else {
+        document.getElementById('lookupStatus').textContent = 'Compila i dati manualmente';
+        document.getElementById('lookupStatus').className = 'lookup-status';
+        document.getElementById('clienteAutoFields').style.display = 'block';
+      }
+    }
+  }, 500);
+}
+
+function lookupVIES(piva) {
+  // Simulazione lookup VIES (in produzione usa il backend Python)
+  document.getElementById('lookupStatus').textContent = 'Verifico su VIES...';
+  document.getElementById('lookupStatus').className = 'lookup-status searching';
+
+  // Simula ritardo rete
+  setTimeout(() => {
+    // Demo: genera dati fittizi per qualsiasi P.IVA
+    const dati = {
+      piva: piva,
+      denominazione: 'Azienda ' + piva.substring(0, 4),
+      indirizzo: 'Via Demo 1',
+      comune: 'Milano',
+      provincia: 'MI',
+      cap: '20100',
+      fonte: 'vies_demo',
+    };
+    STATE.clienti[piva] = dati;
+    compilaCliente(dati);
+    salva();
+  }, 800);
+}
+
+function compilaCliente(dati) {
+  document.getElementById('fDenominazione').value = dati.denominazione || '';
+  document.getElementById('fIndirizzo').value = dati.indirizzo || '';
+  document.getElementById('fComune').value = dati.comune || '';
+  document.getElementById('fProv').value = dati.provincia || '';
+  document.getElementById('clienteAutoFields').style.display = 'block';
+  document.getElementById('lookupStatus').textContent = '✓ ' + dati.denominazione + (dati.fonte ? ' (' + dati.fonte + ')' : '');
+  document.getElementById('lookupStatus').className = 'lookup-status found';
+
+  // Se il campo fCliente era una P.IVA, aggiorna anche il nome
+  const q = document.getElementById('fCliente').value.trim();
+  if (/^\d{11}$/.test(q) && dati.denominazione) {
+    // Non sovrascrivere il campo, ma mostra il nome nel lookup status
+  }
+}
+
+// =========================================================
+// PRESTAZIONI
+// =========================================================
+function aggiungiPrestazione() {
+  const container = document.getElementById('prestazioniContainer');
+  const row = document.createElement('div');
+  row.className = 'form-row three prestazione-row';
+  row.innerHTML = `
+    <div class="field"><input type="text" placeholder="Descrizione prestazione" class="pDesc"></div>
+    <div class="field"><input type="number" placeholder="Importo €" class="pImporto" min="0" step="0.01"></div>
+    <div class="field" style="display:flex;flex-direction:row;gap:4px;align-items:flex-end">
+      <input type="number" placeholder="Qt." class="pQta" value="1" min="1" style="flex:1">
+      <button class="btn btn-ghost btn-sm" onclick="this.closest('.prestazione-row').remove();aggiornaTotale()" style="padding:10px;color:var(--red)">✕</button>
+    </div>`;
+  container.appendChild(row);
+}
+
+function calcolaTotale() {
+  let tot = 0;
+  document.querySelectorAll('.prestazione-row').forEach(row => {
+    const imp = parseFloat(row.querySelector('.pImporto')?.value) || 0;
+    const qta = parseFloat(row.querySelector('.pQta')?.value) || 1;
+    tot += imp * qta;
+  });
+  return Math.round(tot * 100) / 100;
+}
+
+function aggiornaTotale() {
+  const tot = calcolaTotale();
+  document.getElementById('fTotale').textContent = '€' + tot.toLocaleString('it-IT', {minimumFractionDigits: 2});
+  const bollo = tot > 77.47;
+  document.getElementById('fBolloNote').textContent = bollo ? 'Bollo virtuale €2,00 (applicato automaticamente)' : '';
+}
+
+// Auto-update totale
+document.addEventListener('input', e => {
+  if (e.target.classList.contains('pImporto') || e.target.classList.contains('pQta')) aggiornaTotale();
+});
+
+// =========================================================
+// EMETTI FATTURA
+// =========================================================
+function emettiFattura() {
+  const cliente = document.getElementById('fCliente').value.trim() || document.getElementById('fDenominazione').value.trim();
+  if (!cliente) { alert('Inserisci il cliente'); return; }
+
+  const prestazioni = [];
+  document.querySelectorAll('.prestazione-row').forEach(row => {
+    const desc = row.querySelector('.pDesc')?.value?.trim();
+    const imp = parseFloat(row.querySelector('.pImporto')?.value) || 0;
+    const qta = parseFloat(row.querySelector('.pQta')?.value) || 1;
+    if (desc && imp > 0) prestazioni.push({ descrizione: desc, importo: imp, quantita: qta });
+  });
+
+  if (prestazioni.length === 0) { alert('Aggiungi almeno una prestazione'); return; }
+
+  const totale = prestazioni.reduce((s, p) => s + p.importo * p.quantita, 0);
+  const bollo = totale > 77.47;
+  const numero = STATE.fatture.length + 1;
+  const denominazione = document.getElementById('fDenominazione').value || cliente;
+
+  const fattura = {
+    numero,
+    data: new Date().toISOString().split('T')[0],
+    cliente: denominazione,
+    cliente_piva: /^\d{11}$/.test(document.getElementById('fCliente').value) ? document.getElementById('fCliente').value : '',
+    prestazioni,
+    importo: Math.round(totale * 100) / 100,
+    bollo,
+    stato_sdi: 'inviata',
+  };
+
+  STATE.fatture.push(fattura);
+  STATE.ricavi = STATE.fatture.reduce((s, f) => s + f.importo, 0);
+
+  // Salva cliente in cache
+  if (fattura.cliente_piva) {
+    STATE.clienti[fattura.cliente_piva] = {
+      piva: fattura.cliente_piva,
+      denominazione: denominazione,
+      indirizzo: document.getElementById('fIndirizzo').value,
+      comune: document.getElementById('fComune').value,
+      provincia: document.getElementById('fProv').value,
+    };
+  }
+
+  salva();
+  aggiornaKPI();
+  aggiornaFatture();
+
+  // Pulisci form
+  document.getElementById('fCliente').value = '';
+  document.getElementById('fDenominazione').value = '';
+  document.getElementById('fIndirizzo').value = '';
+  document.getElementById('fComune').value = '';
+  document.getElementById('fProv').value = '';
+  document.getElementById('fSDI').value = '';
+  document.getElementById('clienteAutoFields').style.display = 'none';
+  document.getElementById('lookupStatus').textContent = '';
+  document.querySelectorAll('.prestazione-row').forEach((r, i) => {
+    if (i > 0) r.remove();
+    else { r.querySelector('.pDesc').value = ''; r.querySelector('.pImporto').value = ''; r.querySelector('.pQta').value = '1'; }
+  });
+  aggiornaTotale();
+
+  // Feedback
+  alert(`Fattura n.${numero} emessa!\n\n${denominazione}\n€${totale.toLocaleString('it-IT', {minimumFractionDigits:2})}\nBollo: ${bollo ? 'SI €2' : 'NO'}\n\nStato SDI: Inviata`);
+
+  // Switch to fatture tab
+  document.querySelector('.tab:nth-child(2)').click();
+}
+
+function anteprimaFattura() {
+  const tot = calcolaTotale();
+  const bollo = tot > 77.47;
+  const cliente = document.getElementById('fDenominazione').value || document.getElementById('fCliente').value || '—';
+  let desc = [];
+  document.querySelectorAll('.prestazione-row').forEach(row => {
+    const d = row.querySelector('.pDesc')?.value;
+    const i = parseFloat(row.querySelector('.pImporto')?.value) || 0;
+    const q = parseFloat(row.querySelector('.pQta')?.value) || 1;
+    if (d) desc.push(`  ${d}: €${(i*q).toLocaleString('it-IT',{minimumFractionDigits:2})}`);
+  });
+  alert(`ANTEPRIMA FATTURA\n\nCliente: ${cliente}\n\n${desc.join('\n')}\n\nTotale: €${tot.toLocaleString('it-IT',{minimumFractionDigits:2})}\nIVA: esente (N2.2)\nRegime: Forfettario RF19\nBollo: ${bollo ? 'SI €2,00' : 'NO'}\n\nDicitura: Operazione effettuata ai sensi dell'art. 1, commi 54-89, L. 190/2014`);
+}
+
+// =========================================================
+// AGGIORNA UI
+// =========================================================
+function fmt(n) { return '€' + Math.round(n).toLocaleString('it-IT'); }
+
+function aggiornaKPI() {
+  const ricavi = STATE.ricavi;
+  const coeff = STATE.profilo.coeff;
+  const aliq = STATE.profilo.aliquota;
+  const reddito = ricavi * coeff;
+  const inps = reddito * 0.2607;
+  const imposta = reddito * aliq;
+  const totTasse = inps + imposta;
+  const bollo = STATE.fatture.filter(f => f.bollo).length * 2;
+  const totale = totTasse + bollo;
+  const netto = ricavi - totale;
+  const aliqEff = ricavi > 0 ? (totale / ricavi * 100).toFixed(1) : '0.0';
+  const mese = new Date().getMonth() + 1;
+  const proiezione = mese > 0 ? ricavi / mese * 12 : 0;
+
+  document.getElementById('kpiRicavi').textContent = fmt(ricavi);
+  document.getElementById('kpiNumFatture').textContent = STATE.fatture.length + ' fatture';
+  document.getElementById('kpiTasse').textContent = fmt(totale);
+  document.getElementById('kpiAliquota').textContent = 'aliq. eff. ' + aliqEff + '%';
+  document.getElementById('kpiNetto').textContent = fmt(netto);
+  document.getElementById('kpiNettoPerc').textContent = ricavi > 0 ? ((netto/ricavi*100).toFixed(1) + '% del fatturato') : '—';
+  document.getElementById('kpiMensile').textContent = fmt(totale / 12);
+  document.getElementById('kpiProiezione').textContent = fmt(proiezione);
+
+  // Proiezione color
+  const projEl = document.getElementById('kpiProiezione');
+  if (proiezione >= 85000) { projEl.className = 'kpi-value amber'; }
+  else { projEl.className = 'kpi-value'; }
+
+  // Scadenzario
+  document.getElementById('scadImposta').textContent = fmt(imposta);
+  document.getElementById('scadINPS').textContent = fmt(inps);
+
+  // Situazione fiscale
+  document.getElementById('sitRicavi').textContent = fmt(ricavi);
+  document.getElementById('sitCoeff').textContent = Math.round(coeff * 100) + '%';
+  document.getElementById('sitReddito').textContent = fmt(reddito);
+  document.getElementById('sitRedditoNetto').textContent = fmt(reddito);
+  document.getElementById('sitINPS').textContent = fmt(inps);
+  document.getElementById('sitImposta').textContent = fmt(imposta);
+  document.getElementById('sitBollo').textContent = fmt(bollo);
+  document.getElementById('sitTotale').textContent = fmt(totale);
+  document.getElementById('sitNetto').textContent = fmt(netto);
+
+  // Alerts
+  const alertArea = document.getElementById('alertArea');
+  alertArea.innerHTML = '';
+  if (proiezione >= 100000) {
+    alertArea.innerHTML = '<div class="alert alert-danger"><strong>CRITICO</strong> Proiezione €' + Math.round(proiezione).toLocaleString('it-IT') + ' — rischio uscita IMMEDIATA dal forfettario con IVA retroattiva!</div>';
+  } else if (proiezione >= 85000) {
+    alertArea.innerHTML = '<div class="alert alert-warning"><strong>ATTENZIONE</strong> Proiezione €' + Math.round(proiezione).toLocaleString('it-IT') + ' — rischio uscita dal forfettario dall\'anno prossimo.</div>';
+  }
+}
+
+function aggiornaFatture() {
+  const tbody = document.getElementById('fattureBody');
+  if (STATE.fatture.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:32px">Nessuna fattura emessa</td></tr>';
+    return;
+  }
+  tbody.innerHTML = STATE.fatture.map(f => `
+    <tr>
+      <td class="mono">${f.numero}</td>
+      <td>${f.data}</td>
+      <td><strong>${f.cliente}</strong>${f.cliente_piva ? '<br><span style="font-size:11px;color:var(--text3)" class="mono">' + f.cliente_piva + '</span>' : ''}</td>
+      <td style="font-size:12px;color:var(--text2)">${f.prestazioni.map(p => p.descrizione).join(', ')}</td>
+      <td>${f.bollo ? '<span class="badge badge-amber">€2</span>' : '—'}</td>
+      <td class="mono right" style="font-weight:600">€${f.importo.toLocaleString('it-IT', {minimumFractionDigits:2})}</td>
+      <td><span class="badge badge-green">${f.stato_sdi}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="scaricaPDF(${f.numero})">PDF</button></td>
+    </tr>`).join('');
+}
+
+function scaricaPDF(numero) {
+  const f = STATE.fatture.find(x => x.numero === numero);
+  if (!f) return;
+  // Genera una "copia di cortesia" come testo
+  let text = `COPIA DI CORTESIA — FATTURA N. ${f.numero}\n`;
+  text += `${'='.repeat(50)}\n\n`;
+  text += `Data: ${f.data}\n`;
+  text += `P.IVA emittente: ${STATE.profilo.piva}\n`;
+  text += `Regime: Forfettario (L. 190/2014)\n\n`;
+  text += `Cliente: ${f.cliente}\n`;
+  if (f.cliente_piva) text += `P.IVA cliente: ${f.cliente_piva}\n`;
+  text += `\n${'─'.repeat(50)}\n`;
+  f.prestazioni.forEach(p => {
+    const tot = p.importo * (p.quantita || 1);
+    text += `${p.descrizione}\n  ${p.quantita || 1} x €${p.importo.toFixed(2)} = €${tot.toFixed(2)}\n`;
+  });
+  text += `${'─'.repeat(50)}\n`;
+  text += `TOTALE: €${f.importo.toFixed(2)}\n`;
+  text += `IVA: esente (natura N2.2)\n`;
+  if (f.bollo) text += `Bollo virtuale: €2,00\n`;
+  text += `\nOperazione effettuata ai sensi dell'art. 1,\ncommi 54-89, Legge n. 190/2014\n`;
+
+  const blob = new Blob([text], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fattura_${f.numero}_${f.data}.txt`;
+  a.click();
+}
+
+function collegaBanca() {
+  const iban = document.getElementById('bIBAN').value.trim();
+  const banca = document.getElementById('bBanca').value;
+  if (!iban || !banca) { alert('Inserisci IBAN e seleziona la banca'); return; }
+
+  document.getElementById('movimentiBanca').innerHTML = `
+    <div class="alert alert-info" style="margin-bottom:12px">
+      Conto collegato: <strong class="mono">${iban}</strong><br>
+      I movimenti si aggiorneranno automaticamente via PSD2.
+    </div>
+    <div style="color:var(--text3);font-size:13px">
+      In produzione, FiscalAI si collega alla tua banca via Tink/Yapily (PSD2) e importa i movimenti in tempo reale.
+      Ogni accredito viene automaticamente riconciliato con le fatture emesse.
+    </div>`;
+  salva();
+}
+
+// Init on load
+init();
+</script>
+</body>
+</html>
