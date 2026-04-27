@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FiscalAI — Apri la tua P.IVA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -899,10 +900,11 @@ function apriPIVA() {
           <div><span style="color:var(--text3)">Op. intracomunitarie:</span> NO (se non vendi in EU)</div>
         </div>
       </div>
-      <div style="margin-top:12px;display:flex;gap:8px">
-        <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/AA9_12+istruzioni_2024.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Istruzioni ufficiali PDF</a>
+      <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <button class="btn btn-success" onclick="generaPdfAA9()">Scarica AA9/12 compilato (PDF) →</button>
+        <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/AA9_12+istruzioni_2024.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Istruzioni ufficiali</a>
         <span style="color:var(--border)">|</span>
-        <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/Modello+aa9_AA9_12+modello.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Modello PDF stampabile</a>
+        <a href="https://www.agenziaentrate.gov.it/portale/documents/20143/6020466/Modello+aa9_AA9_12+modello.pdf" target="_blank" style="font-size:12px;color:var(--text3)">Modello vuoto</a>
       </div>
     </div>
 
@@ -1157,6 +1159,266 @@ function demoMode() {
     const pivaEl = document.getElementById('numeroPiva');
     if (pivaEl) pivaEl.value = '04271990035';
   }, 200);
+}
+
+// =========================================================
+// GENERA PDF AA9/12 COMPILATO
+// =========================================================
+function generaPdfAA9() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const g = id => (document.getElementById(id)?.value || '');
+  const oggi = new Date().toLocaleDateString('it-IT');
+  const cf = g('cf').toUpperCase();
+  const cognome = g('cognome').toUpperCase();
+  const nome = g('nome').toUpperCase();
+  const dob = g('dob');
+  const comuneNasc = g('comuneNascita').toUpperCase();
+  const provNasc = g('provNascita').toUpperCase();
+  const indirizzo = g('indirizzo');
+  const email = g('email');
+  const telefono = g('telefono');
+  const attivita = document.getElementById('attivita')?.value || 'Sviluppo software';
+  const pec = document.getElementById('pec')?.value || '';
+  const ateco = selectedAteco.code;
+  const atecoDesc = document.querySelector('.ateco-card.selected .ateco-desc')?.textContent || attivita;
+
+  // Colori
+  const TEAL = [0, 166, 180];
+  const DARK = [30, 30, 30];
+  const GRAY = [120, 120, 120];
+  const LIGHT = [240, 248, 250];
+  const WHITE = [255, 255, 255];
+
+  let y = 15;
+
+  // === PAGINA 1: Informativa privacy ===
+  doc.setFillColor(...TEAL);
+  doc.rect(0, 0, 210, 8, 'F');
+  doc.setFontSize(8);
+  doc.setTextColor(...WHITE);
+  doc.text('Modello AA9/12 — Generato da FiscalAI', 105, 5, { align: 'center' });
+
+  doc.setTextColor(...DARK);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  y = 20;
+  doc.text('DICHIARAZIONE DI INIZIO ATTIVITA', 105, y, { align: 'center' });
+  y += 6;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('VARIAZIONE DATI O CESSAZIONE ATTIVITA AI FINI IVA', 105, y, { align: 'center' });
+  y += 5;
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text('(IMPRESE INDIVIDUALI E LAVORATORI AUTONOMI)', 105, y, { align: 'center' });
+
+  y += 10;
+  doc.setFontSize(9);
+  doc.setTextColor(...DARK);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Informativa sul trattamento dei dati personali', 15, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(...GRAY);
+  const privacy = 'I dati trasmessi attraverso il presente modello sono trattati dall\'Agenzia delle Entrate per le finalita di cui all\'articolo 35 del D.P.R. 26 ottobre 1972, n. 633, in materia di dichiarazioni di inizio attivita, variazione dati o cessazione attivita ai fini IVA. Il conferimento dei dati e obbligatorio al fine di attribuire la partita IVA. Titolare del trattamento e l\'Agenzia delle Entrate, con sede in Roma, via Giorgione n. 106.';
+  const lines = doc.splitTextToSize(privacy, 180);
+  doc.text(lines, 15, y);
+
+  // === PAGINA 2: Quadri A, B, C ===
+  doc.addPage();
+  y = 12;
+
+  // CF in alto
+  doc.setFillColor(...LIGHT);
+  doc.rect(12, y - 4, 186, 10, 'F');
+  doc.setDrawColor(...TEAL);
+  doc.rect(12, y - 4, 186, 10, 'S');
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text('CODICE FISCALE', 15, y + 1);
+  doc.setFontSize(12);
+  doc.setFont('courier', 'bold');
+  doc.setTextColor(...DARK);
+  doc.text(cf || '________________', 60, y + 2);
+  y += 14;
+
+  // Helper per sezioni
+  function sectionHeader(title, yPos) {
+    doc.setFillColor(...TEAL);
+    doc.rect(12, yPos - 4, 186, 8, 'F');
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...WHITE);
+    doc.text(title, 15, yPos + 1);
+    return yPos + 10;
+  }
+
+  function field(label, value, x, yPos, w) {
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...GRAY);
+    doc.text(label, x, yPos);
+    doc.setFontSize(10);
+    doc.setFont('courier', 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(String(value || ''), x, yPos + 5);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(x, yPos + 6, x + w, yPos + 6);
+    return yPos + 12;
+  }
+
+  // QUADRO A
+  y = sectionHeader('QUADRO A — TIPO DI DICHIARAZIONE', y);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...DARK);
+  doc.text('[X]  1  INIZIO ATTIVITA', 18, y + 2);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Data inizio: ' + oggi, 120, y + 2);
+  y += 8;
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text('[  ]  2  Variazione dati        [  ]  3  Cessazione attivita        [  ]  4  Richiesta duplicato', 18, y + 2);
+  y += 12;
+
+  // QUADRO B
+  y = sectionHeader('QUADRO B — SOGGETTO D\'IMPOSTA', y);
+
+  y = field('COGNOME OVVERO DENOMINAZIONE', cognome, 15, y, 90);
+  field('NOME', nome, 110, y - 12, 85);
+
+  y = field('CODICE ATTIVITA (ATECO)', ateco, 15, y, 30);
+  field('DESCRIZIONE ATTIVITA', atecoDesc, 55, y - 12, 140);
+
+  // Volume affari
+  doc.setFillColor(255, 248, 230);
+  doc.rect(15, y - 3, 180, 8, 'F');
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(180, 120, 0);
+  doc.text('VOLUME D\'AFFARI PRESUNTO:  NON COMPILARE (forfettari esenti - istruzioni pag. 4)', 18, y + 2);
+  y += 12;
+
+  y = field('INDIRIZZO SEDE ATTIVITA', indirizzo, 15, y, 180);
+
+  // Regime agevolato
+  doc.setFillColor(220, 255, 240);
+  doc.rect(15, y - 3, 180, 10, 'F');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 120, 60);
+  doc.text('REGIME FISCALE AGEVOLATO:  [X]  Casella 2', 18, y + 1);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Regime forfetario (art. 1, comma 54, L. 23 dicembre 2014, n. 190)', 18, y + 6);
+  y += 14;
+
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text('Scritture contabili: [  ] NON barrare (forfettari esonerati)', 18, y);
+  y += 12;
+
+  // QUADRO C
+  y = sectionHeader('QUADRO C — TITOLARE', y);
+  y = field('CODICE FISCALE TITOLARE', cf, 15, y, 60);
+  field('COGNOME', cognome, 80, y - 12, 55);
+  field('NOME', nome, 140, y - 12, 55);
+
+  y = field('DATA DI NASCITA', dob, 15, y, 30);
+  field('COMUNE DI NASCITA', comuneNasc, 55, y - 12, 80);
+  field('PROV.', provNasc, 140, y - 12, 15);
+
+  y = field('RESIDENZA / DOMICILIO FISCALE', indirizzo, 15, y, 180);
+
+  // === PAGINA 3: Quadri D-H (non compilare) ===
+  doc.addPage();
+  y = 12;
+  doc.setFillColor(...LIGHT);
+  doc.rect(12, y - 4, 186, 10, 'F');
+  doc.setDrawColor(...TEAL);
+  doc.rect(12, y - 4, 186, 10, 'S');
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text('CODICE FISCALE', 15, y + 1);
+  doc.setFontSize(12);
+  doc.setFont('courier', 'bold');
+  doc.setTextColor(...DARK);
+  doc.text(cf || '________________', 60, y + 2);
+  y += 16;
+
+  const quadriVuoti = [
+    'QUADRO D — RAPPRESENTANTE',
+    'QUADRO E — OPERAZIONI STRAORDINARIE',
+    'QUADRO F — LUOGHI CONSERVAZIONE SCRITTURE CONTABILI',
+    'QUADRO G — ALTRE ATTIVITA ESERCITATE',
+    'QUADRO H — PRESUNZIONE DI CESSIONE',
+  ];
+  quadriVuoti.forEach(q => {
+    y = sectionHeader(q, y);
+    doc.setFontSize(9);
+    doc.setTextColor(...GRAY);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Non compilare — non applicabile per inizio attivita forfettario', 18, y + 2);
+    y += 14;
+  });
+
+  // === PAGINA 4: Quadro I ===
+  doc.addPage();
+  y = 12;
+  doc.setFillColor(...LIGHT);
+  doc.rect(12, y - 4, 186, 10, 'F');
+  doc.setDrawColor(...TEAL);
+  doc.rect(12, y - 4, 186, 10, 'S');
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text('CODICE FISCALE', 15, y + 1);
+  doc.setFontSize(12);
+  doc.setFont('courier', 'bold');
+  doc.setTextColor(...DARK);
+  doc.text(cf || '________________', 60, y + 2);
+  y += 16;
+
+  y = sectionHeader('QUADRO I — ALTRE INFORMAZIONI IN SEDE DI INIZIO ATTIVITA', y);
+
+  y = field('INDIRIZZO PEC (POSTA ELETTRONICA CERTIFICATA)', pec || '(compilare)', 15, y, 120);
+  field('TELEFONO', telefono, 140, y - 12, 55);
+
+  y = field('EMAIL', email, 15, y, 90);
+  y += 2;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...DARK);
+  doc.text('DATI IMMOBILE DESTINATO ALL\'ESERCIZIO DELL\'ATTIVITA', 15, y);
+  y += 6;
+  y = field('TITOLARITA IMMOBILE', 'P (possesso)', 15, y, 40);
+  field('TIPO DI CATASTO', 'F (fabbricato)', 65, y - 12, 40);
+  y += 2;
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DATI RELATIVI ALL\'ATTIVITA ESERCITATA', 15, y);
+  y += 6;
+  y = field('TIPOLOGIA DELLA CLIENTELA', '1 (imprese)', 15, y, 40);
+  field('LUOGO APERTO AL PUBBLICO', 'NO', 65, y - 12, 30);
+  field('OPERAZIONI INTRACOMUNITARIE', 'NO', 105, y - 12, 40);
+
+  y += 8;
+  doc.setFillColor(...LIGHT);
+  doc.rect(12, y - 3, 186, 14, 'F');
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Documento generato da FiscalAI il ' + oggi, 15, y + 2);
+  doc.text('Questo documento e un supporto alla compilazione. Per l\'invio telematico usare', 15, y + 6);
+  doc.text('il servizio "Invio diretto" su agenziaentrate.gov.it oppure stampare e portare all\'ufficio AdE.', 15, y + 10);
+
+  // Salva
+  const filename = 'AA9_12_' + (cognome || 'cognome') + '_' + (nome || 'nome') + '.pdf';
+  doc.save(filename);
 }
 
 // Init
